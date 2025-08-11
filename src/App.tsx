@@ -7,6 +7,7 @@ import KycVerification from "./pages/KycVerification";
 import NotFound from "./pages/NotFound";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { UserContextProvider } from "./context/UserContext";
 
 const queryClient = new QueryClient();
 
@@ -15,19 +16,21 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={< NotFound />} />
-              <Route path="/kyc-verification" element={<KycVerification />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </BrowserRouter>
+      <UserContextProvider>
+        <BrowserRouter>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={< NotFound />} />
+                <Route path="/kyc-verification" element={<KycVerification />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </BrowserRouter>
+      </UserContextProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

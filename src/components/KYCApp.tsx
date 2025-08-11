@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DocumentTypeSelector } from './DocumentTypeSelector';
 import { DocumentUpload, DocumentType } from './DocumentUpload';
 import { ExtractedFields } from './ExtractedFields';
@@ -13,7 +13,7 @@ type Step = 'select' | 'upload' | 'extract' | 'complete';
 
 export function KYCApp() {
   const [currentStep, setCurrentStep] = useState<Step>('select');
-  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType>('pan');
+  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -61,6 +61,7 @@ export function KYCApp() {
       setUploadedFile(null);
       setIsProcessing(false);
       setIsSuccess(false);
+      setSelectedDocumentType(null)
     } else if (currentStep === 'extract') {
       setCurrentStep('upload');
     }
