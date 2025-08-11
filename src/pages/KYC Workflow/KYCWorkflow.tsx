@@ -116,20 +116,10 @@ export const KYCWorkflow: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md shadow-sm border-b sticky top-0 z-50">
+        {/* <header className="bg-white/80 backdrop-blur-md shadow-sm border-b sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    Asmadiya Technologies
-                  </h1>
-                  <p className="text-sm text-gray-600">KYC Document Verification</p>
-                </div>
-              </div>
+             
               {currentStep !== 'home' && (
                 <button
                   onClick={() => setCurrentStep('home')}
@@ -140,7 +130,7 @@ export const KYCWorkflow: React.FC = () => {
               )}
             </div>
           </div>
-        </header>
+        </header> */}
 
         {/* Home Page */}
         {currentStep === 'home' && (
@@ -316,34 +306,42 @@ export const KYCWorkflow: React.FC = () => {
 
             {/* Testimonials */}
             <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
-                  <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-                    Trusted by Thousands
-                  </h2>
-                  <p className="text-xl text-blue-100">
-                    See what our customers say about their experience
-                  </p>
-                </div>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-16">
+      <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+        Trusted by Thousands
+      </h2>
+      <p className="text-xl text-blue-100">
+        See what our customers say about their experience
+      </p>
+    </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
-                  {testimonials.map((testimonial, index) => (
-                    <div key={index} className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-                      <div className="flex items-center mb-4">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                        ))}
-                      </div>
-                      <p className="text-white mb-6 leading-relaxed">"{testimonial.content}"</p>
-                      <div>
-                        <div className="font-semibold text-white">{testimonial.name}</div>
-                        <div className="text-blue-200 text-sm">{testimonial.role}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+    <div className="grid md:grid-cols-3 gap-8">
+      {testimonials.map((testimonial, index) => (
+        <div
+          key={index}
+          className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 
+                     transform transition-transform duration-300 
+                     hover:-translate-y-3 hover:shadow-2xl cursor-pointer"
+        >
+          <div className="flex items-center mb-4">
+            {[...Array(testimonial.rating)].map((_, i) => (
+              <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+            ))}
+          </div>
+          <p className="text-white mb-6 leading-relaxed">
+            "{testimonial.content}"
+          </p>
+          <div>
+            <div className="font-semibold text-white">{testimonial.name}</div>
+            <div className="text-blue-200 text-sm">{testimonial.role}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
 
             {/* CTA Section */}
             <section className="py-20 bg-gray-900">
@@ -365,22 +363,16 @@ export const KYCWorkflow: React.FC = () => {
             </section>
 
             {/* Footer */}
-            <footer className="bg-gray-900 border-t border-gray-800 py-12">
+            {/* <footer className="bg-gray-900 border-t border-gray-800 py-12">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col md:flex-row justify-between items-center">
+                {/* <div className="flex flex-col md:flex-row justify-between items-center">
                   <div className="flex items-center space-x-3 mb-4 md:mb-0">
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-white font-semibold">Asmadiya Technologies</span>
-                  </div>
-                  <div className="text-gray-400 text-sm">
-                    © 2025 Asmadiya Technologies. All rights reserved.
-                  </div>
-                </div>
+                  
+                </div> */}
+              {/* </div> */}
               </div>
-            </footer>
-          </div>
+          //   </footer> */}
+          // </div>
         )}
 
         {/* Progress Steps (for non-home pages) */}
