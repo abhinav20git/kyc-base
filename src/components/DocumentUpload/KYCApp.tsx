@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { DocumentTypeSelector } from './DocumentTypeSelector';
-import { DocumentUpload, DocumentType } from './DocumentUpload';
-import { ExtractedFields } from './ExtractedFields';
+import { DocumentTypeSelector } from '../DocumentTypeSelector';
+import { DocumentUpload, DocumentType } from '../DocumentUpload';
+import { ExtractedFields } from '../ExtractedFields';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
