@@ -1,7 +1,7 @@
 import { KYCApp } from "@/components/KYCApp";
 
-const Index = () => {
+const KycVerification = () => {
   return <KYCApp />;
 };
 
-export default Index;
+export default KycVerification;
