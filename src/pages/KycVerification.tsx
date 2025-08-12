@@ -1,4 +1,4 @@
-import { KYCApp } from "@/components/KYCApp";
+import { KYCApp } from "../components/DocumentUpload/KYCApp";
 
 const KycVerification = () => {
   return <KYCApp />;
