@@ -27,19 +27,18 @@ const App = () => (
             <main className="flex-1">
               <Routes>
                 <Route path="/" element={< KYCWorkflow />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/signup" element={<Signup />} />
-  <Route
-    path="/kyc-verification"
-    element={
-      <ProtectedRoute>
-        <KycVerification />
-        </ProtectedRoute>
-    }
-  />
-  {/* <Route path="*" element={<NotFound />} /> */}
-  </Routes>
-
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route
+                  path="/kyc-verification"
+                  element={
+                    <ProtectedRoute>
+                      <KycVerification />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* <Route path="*" element={<NotFound />} /> */}
+              </Routes>
             </main>
             <Footer />
           </div>

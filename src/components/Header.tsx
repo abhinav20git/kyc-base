@@ -37,7 +37,7 @@ const Header: React.FC = () => {
                 <Link to="/login">Login</Link>
               </Button>
             </>
-          )}
+          }
         </nav>
       </div>
     </header>
