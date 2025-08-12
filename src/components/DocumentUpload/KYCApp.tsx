@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 type Step = 'select' | 'upload' | 'extract' | 'complete';
 
 export function KYCApp() {
+  const [capturedImage, setCapturedImage] = useState(null)
   const [currentStep, setCurrentStep] = useState<Step>('select');
   const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -29,6 +30,7 @@ export function KYCApp() {
   const handleDocumentTypeSelect = (type: DocumentType) => {
     setSelectedDocumentType(type);
     setCurrentStep('upload');
+    setCapturedImage(null)
   };
 
   const handleFileUpload = async (file: File, type: DocumentType) => {
@@ -158,6 +160,8 @@ export function KYCApp() {
                   uploadedFile={uploadedFile || undefined}
                   isProcessing={isProcessing}
                   isSuccess={isSuccess}
+                  setCapturedImage={setCapturedImage}
+                  capturedImage={capturedImage}
                 />
               </div>
             </div>
@@ -168,6 +172,7 @@ export function KYCApp() {
               documentType={selectedDocumentType}
               data={{}}
               onVerify={handleVerifyComplete}
+              capturedImage={capturedImage}
             />
           )}
 
