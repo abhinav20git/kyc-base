@@ -5,17 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, CheckCircle, AlertCircle, Camera, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UploadedFile } from '@/utils/constants';
 
 export type DocumentType = 'pan' | 'aadhaar' | 'passport';
 
 interface DocumentUploadProps {
   documentType: DocumentType;
   onFileUpload: (file: File, type: DocumentType) => void;
-  uploadedFile?: File;
+  uploadedFile?: UploadedFile;
   isProcessing?: boolean;
   isSuccess?: boolean;
-  capturedImage: string,
-  setCapturedImage:(file:string)=>void
 }
 
 const documentTypeLabels = {
@@ -30,8 +29,6 @@ export function DocumentUpload({
   uploadedFile,
   isProcessing,
   isSuccess,
-  capturedImage,
-  setCapturedImage
 }: DocumentUploadProps) {
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -83,8 +80,6 @@ export function DocumentUpload({
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
-        const imageData = canvas.toDataURL("image/jpeg");
-        setCapturedImage(imageData);
         canvas.toBlob((blob) => {
           if (blob) {
             const file = new File([blob], `${documentType}-capture.jpg`, { type: 'image/jpeg' });
@@ -115,10 +110,9 @@ export function DocumentUpload({
   const getStatusText = () => {
     if (isSuccess) return 'Document processed successfully';
     if (isProcessing) return 'Processing document...';
-    if (uploadedFile) return uploadedFile.name;
+    if (uploadedFile) return uploadedFile.file?.name;
     return `Drop your ${documentTypeLabels[documentType]} here or click to browse`;
   };
-
   return (
     <Card className="relative overflow-hidden">
       <div
@@ -144,14 +138,14 @@ export function DocumentUpload({
             </p>
           </div>
 
-          {!uploadedFile && !isProcessing && (
+          {!uploadedFile.file && !isProcessing && (
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2 justify-center">
                 <Badge variant="secondary">PNG</Badge>
                 <Badge variant="secondary">JPG</Badge>
-                <Badge variant="secondary">PDF</Badge>
+                <Badge variant="secondary">JPEG</Badge>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-center">
                 <Button
                   type="button"
                   variant="outline"
@@ -167,13 +161,22 @@ export function DocumentUpload({
           )}
           {/* Image */}
           {
-            capturedImage && (
+            uploadedFile.file?.type.startsWith('image/') && !isProcessing && isSuccess && (
               <div>
-                <img src={capturedImage} alt="" />
+                <img src={uploadedFile.preview} alt="" />
               </div>
             )
           }
-          {uploadedFile && !isProcessing && !isSuccess && (
+          {
+            uploadedFile.file?.type == 'application/pdf' && !isProcessing && isSuccess && (
+              <iframe
+                src={uploadedFile.preview}
+                className="w-full h-64"
+                title="PDF Preview"
+              ></iframe>
+            )
+          }
+          {uploadedFile.file && !isProcessing && !isSuccess && (
             <div className="flex gap-2">
               <Button variant="outline" size="sm">
                 Change File

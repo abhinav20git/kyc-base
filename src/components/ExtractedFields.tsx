@@ -1,4 +1,4 @@
-import { DocumentType } from './DocumentUpload'; 
+import { DocumentType } from './DocumentUpload';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,8 @@ import { CheckCircle, Copy, Download, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { UploadedFile } from '@/utils/constants';
 
 interface ExtractedData {
   [key: string]: string;
@@ -16,7 +17,7 @@ interface ExtractedFieldsProps {
   documentType: DocumentType;
   data: ExtractedData;
   onVerify: () => void;
-  capturedImage: string
+  uploadedFile: UploadedFile
 }
 
 const mockExtractedData: Record<DocumentType, ExtractedData> = {
@@ -42,9 +43,8 @@ const mockExtractedData: Record<DocumentType, ExtractedData> = {
   }
 };
 
-export function ExtractedFields({ documentType, data, onVerify, capturedImage }: ExtractedFieldsProps) {
+export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: ExtractedFieldsProps) {
   const { toast } = useToast();
-  
   const [extractedData, setExtractedData] = useState(mockExtractedData[documentType]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentField, setCurrentField] = useState<string>('');
@@ -75,7 +75,7 @@ export function ExtractedFields({ documentType, data, onVerify, capturedImage }:
     link.download = `${documentType}_extracted_data.json`;
     link.click();
     URL.revokeObjectURL(url);
-    
+
     toast({
       title: "Export successful",
       description: "Data exported as JSON file",
@@ -112,7 +112,7 @@ export function ExtractedFields({ documentType, data, onVerify, capturedImage }:
             Review and edit the extracted data for accuracy
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={exportData}>
             <Download className="w-4 h-4 mr-2" />
@@ -120,13 +120,24 @@ export function ExtractedFields({ documentType, data, onVerify, capturedImage }:
           </Button>
         </div>
       </div>
-      <img src={capturedImage} alt="" width={'420px'} height={"320px"} className='self-center rounded border-2 border-blue-500'/>
+      {
+        uploadedFile.file.type.startsWith('image/') && <img src={uploadedFile.preview} alt="" width={'420px'} height={"320px"} className='self-center rounded border-2 border-blue-500' />
+      }
+      {
+        uploadedFile.file?.type == 'application/pdf' && (
+          <iframe
+            src={uploadedFile.preview}
+            className="w-full h-64"
+            title="PDF Preview"
+          ></iframe>
+        )
+      }
       <Card className="bg-gradient-to-br from-card to-secondary/20 border">
         <div className="p-6 gap-4 grid grid-cols-1 md:grid-cols-2 items-center">
           {Object.entries(extractedData).map(([field, value], i, data) => (
             <div
               key={field}
-              className={`h-20 flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow ${i % 2 == 0 && i+1 == data.length ? 'md:col-span-2': ''}`}
+              className={`h-20 flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow ${i % 2 == 0 && i + 1 == data.length ? 'md:col-span-2' : ''}`}
             >
               <div className="space-y-1 flex-1">
                 <Badge variant="outline" className="text-xs">
@@ -134,7 +145,7 @@ export function ExtractedFields({ documentType, data, onVerify, capturedImage }:
                 </Badge>
                 <p className="font-medium text-card-foreground">{value}</p>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -158,7 +169,7 @@ export function ExtractedFields({ documentType, data, onVerify, capturedImage }:
 
       {/* Verify button */}
       <div className="flex justify-center">
-        <Button 
+        <Button
           onClick={onVerify}
           className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 px-8"
         >

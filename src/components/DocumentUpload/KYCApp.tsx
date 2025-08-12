@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Shield, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { UploadedFile } from '@/utils/constants';
 
 type Step = 'select' | 'upload' | 'extract' | 'complete';
 
 export function KYCApp() {
-  const [capturedImage, setCapturedImage] = useState(null)
   const [currentStep, setCurrentStep] = useState<Step>('select');
   const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType>(null);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile>({file: null, type: null, preview: null});
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
@@ -30,23 +30,32 @@ export function KYCApp() {
   const handleDocumentTypeSelect = (type: DocumentType) => {
     setSelectedDocumentType(type);
     setCurrentStep('upload');
-    setCapturedImage(null)
   };
 
   const handleFileUpload = async (file: File, type: DocumentType) => {
-    setUploadedFile(file);
-    setIsProcessing(true);
-    
-    // Simulate processing time
-    setTimeout(() => {
-      setIsProcessing(false);
-      setIsSuccess(true);
-      setCurrentStep('extract');
+    try {
+      if(!file.type.startsWith('image/')){
+        throw new Error('Invalid file type, please upload image')
+      }
+      const preview = URL.createObjectURL(file)
+      setUploadedFile({file, type, preview});
+      setIsProcessing(true);
+      // Simulate processing time
+      setTimeout(() => {
+        setIsProcessing(false);
+        setIsSuccess(true);
+        setCurrentStep('extract');
+        toast({
+          title: "Document processed successfully!",
+          description: "All fields have been extracted automatically.",
+        });
+      }, 3000);
+    } catch (error) {
       toast({
-        title: "Document processed successfully!",
-        description: "All fields have been extracted automatically.",
-      });
-    }, 3000);
+      title: "Imvalid request",
+      description: error.message,
+    });
+    }
   };
 
   const handleVerifyComplete = () => {
@@ -60,7 +69,7 @@ export function KYCApp() {
   const handleBack = () => {
     if (currentStep === 'upload') {
       setCurrentStep('select');
-      setUploadedFile(null);
+      setUploadedFile({file: null, type: null, preview: null});
       setIsProcessing(false);
       setIsSuccess(false);
       setSelectedDocumentType(null)
@@ -160,8 +169,6 @@ export function KYCApp() {
                   uploadedFile={uploadedFile || undefined}
                   isProcessing={isProcessing}
                   isSuccess={isSuccess}
-                  setCapturedImage={setCapturedImage}
-                  capturedImage={capturedImage}
                 />
               </div>
             </div>
@@ -172,7 +179,7 @@ export function KYCApp() {
               documentType={selectedDocumentType}
               data={{}}
               onVerify={handleVerifyComplete}
-              capturedImage={capturedImage}
+              uploadedFile={uploadedFile || undefined}
             />
           )}
 
