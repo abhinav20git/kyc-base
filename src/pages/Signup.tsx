@@ -71,9 +71,7 @@ const Signup = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-success rounded-full flex items-center justify-center mb-4">
-            <UserPlus className="w-8 h-8 text-white" />
-          </div>
+       
           <h1 className="text-3xl font-bold mb-2">Create Account</h1>
           <p className="text-muted-foreground">Join our secure KYC verification platform</p>
         </div>
