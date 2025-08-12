@@ -13,6 +13,7 @@ interface ExtractedFieldsProps {
   documentType: DocumentType;
   data: ExtractedData;
   onVerify: () => void;
+  capturedImage: string
 }
 
 const mockExtractedData: Record<DocumentType, ExtractedData> = {
@@ -26,8 +27,8 @@ const mockExtractedData: Record<DocumentType, ExtractedData> = {
     'Aadhaar Number': '1234-5678-9012',
     'Full Name': 'RAJESH KUMAR SHARMA',
     'Date of Birth': '15/06/1985',
+    'Gender': 'Male',
     'Address': '123, MG Road, Bengaluru, Karnataka - 560001',
-    'Gender': 'Male'
   },
   passport: {
     'Passport Number': 'A1234567',
@@ -38,7 +39,7 @@ const mockExtractedData: Record<DocumentType, ExtractedData> = {
   }
 };
 
-export function ExtractedFields({ documentType, data, onVerify }: ExtractedFieldsProps) {
+export function ExtractedFields({ documentType, data, onVerify, capturedImage }: ExtractedFieldsProps) {
   const { toast } = useToast();
   
   // Use mock data for demonstration
@@ -77,7 +78,7 @@ export function ExtractedFields({ documentType, data, onVerify }: ExtractedField
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
@@ -96,13 +97,13 @@ export function ExtractedFields({ documentType, data, onVerify }: ExtractedField
           </Button>
         </div>
       </div>
-
-      <Card className="bg-gradient-to-br from-card to-secondary/20">
-        <div className="p-6 space-y-4">
-          {Object.entries(extractedData).map(([field, value]) => (
+      <img src={capturedImage} alt="" width={'420px'} height={"320px"} className='self-center rounded border-2 border-blue-500'/>
+      <Card className="bg-gradient-to-br from-card to-secondary/20 border">
+        <div className="p-6 gap-4 grid grid-cols-1 md:grid-cols-2 items-center">
+          {Object.entries(extractedData).map(([field, value], i, data) => (
             <div
               key={field}
-              className="flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow"
+              className={`h-20 flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow ${i % 2 == 0 && i+1 == data.length ? 'md:col-span-2': ''}`}
             >
               <div className="space-y-1 flex-1">
                 <Badge variant="outline" className="text-xs">

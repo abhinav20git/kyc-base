@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ interface DocumentUploadProps {
   uploadedFile?: File;
   isProcessing?: boolean;
   isSuccess?: boolean;
+  capturedImage: string,
+  setCapturedImage:(file:string)=>void
 }
 
 const documentTypeLabels = {
@@ -22,12 +24,14 @@ const documentTypeLabels = {
   passport: 'Passport'
 };
 
-export function DocumentUpload({ 
-  documentType, 
-  onFileUpload, 
-  uploadedFile, 
-  isProcessing, 
-  isSuccess 
+export function DocumentUpload({
+  documentType,
+  onFileUpload,
+  uploadedFile,
+  isProcessing,
+  isSuccess,
+  capturedImage,
+  setCapturedImage
 }: DocumentUploadProps) {
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -40,22 +44,25 @@ export function DocumentUpload({
     }
   }, [onFileUpload, documentType]);
 
-  const startCamera = async () => {
+  const startCamera = async (e) => {
+    e.stopPropagation()
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' } // Use back camera on mobile
       });
       setStream(mediaStream);
       setShowCamera(true);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
     } catch (error) {
       console.error('Error accessing camera:', error);
       alert('Unable to access camera. Please check permissions.');
     }
   };
+
+  useEffect(() => {
+    if (showCamera && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [showCamera])
 
   const stopCamera = () => {
     if (stream) {
@@ -66,16 +73,18 @@ export function DocumentUpload({
   };
 
   const capturePhoto = () => {
+    console.log(videoRef.current, canvasRef.current)
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      
+
       if (ctx) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
-        
+        const imageData = canvas.toDataURL("image/jpeg");
+        setCapturedImage(imageData);
         canvas.toBlob((blob) => {
           if (blob) {
             const file = new File([blob], `${documentType}-capture.jpg`, { type: 'image/jpeg' });
@@ -122,10 +131,10 @@ export function DocumentUpload({
         )}
       >
         <input {...getInputProps()} />
-        
+
         <div className="flex flex-col items-center space-y-4 text-center">
           {getStatusIcon()}
-          
+
           <div className="space-y-2">
             <h3 className="font-semibold text-card-foreground">
               {documentTypeLabels[documentType]}
@@ -143,9 +152,9 @@ export function DocumentUpload({
                 <Badge variant="secondary">PDF</Badge>
               </div>
               <div className="flex gap-2">
-                <Button 
+                <Button
                   type="button"
-                  variant="outline" 
+                  variant="outline"
                   size="sm"
                   onClick={startCamera}
                   className="flex items-center gap-2"
@@ -156,15 +165,22 @@ export function DocumentUpload({
               </div>
             </div>
           )}
-
+          {/* Image */}
+          {
+            capturedImage && (
+              <div>
+                <img src={capturedImage} alt="" />
+              </div>
+            )
+          }
           {uploadedFile && !isProcessing && !isSuccess && (
             <div className="flex gap-2">
               <Button variant="outline" size="sm">
                 Change File
               </Button>
-              <Button 
+              <Button
                 type="button"
-                variant="outline" 
+                variant="outline"
                 size="sm"
                 onClick={startCamera}
                 className="flex items-center gap-2"
@@ -187,7 +203,7 @@ export function DocumentUpload({
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            
+
             <div className="relative">
               <video
                 ref={videoRef}
@@ -200,7 +216,7 @@ export function DocumentUpload({
                 className="hidden"
               />
             </div>
-            
+
             <div className="p-4 text-center">
               <p className="text-sm text-muted-foreground mb-4">
                 Position your {documentTypeLabels[documentType]} clearly in the frame
