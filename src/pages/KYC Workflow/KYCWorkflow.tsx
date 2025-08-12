@@ -21,7 +21,7 @@ import {
 import { ExtractedFields } from '../../components/ExtractedDataReview/ExtractedFields';
 import { KYCApp } from '../../components/DocumentUpload/KYCApp';
 import { OcrExtractionResponse } from '../../types/kyc';
-
+import { useNavigate } from 'react-router-dom';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +35,7 @@ const queryClient = new QueryClient({
 type WorkflowStep = 'home' | 'upload' | 'review' | 'complete';
 
 export const KYCWorkflow: React.FC = () => {
+  const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('home');
   const [extractedData, setExtractedData] = useState<OcrExtractionResponse | null>(null);
 
@@ -161,7 +162,7 @@ export const KYCWorkflow: React.FC = () => {
                     
                     <div className="flex flex-col sm:flex-row gap-4">
                       <button
-                        onClick={startKYC}
+                        onClick={()=>navigate('/kyc-verification')}
                         className="group bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
                       >
                         Start KYC Verification
