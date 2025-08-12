@@ -137,7 +137,7 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
           {Object.entries(extractedData).map(([field, value], i, data) => (
             <div
               key={field}
-              className={`h-20 flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow ${i % 2 == 0 && i + 1 == data.length ? 'md:col-span-2' : ''}`}
+              className={`h-21 flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow ${i % 2 == 0 && i + 1 == data.length ? 'md:col-span-2' : ''}`}
             >
               <div className="space-y-1 flex-1">
                 <Badge variant="outline" className="text-xs">
