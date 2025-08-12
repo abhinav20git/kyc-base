@@ -1,9 +1,12 @@
-import { DocumentType } from './DocumentUpload';
+import { DocumentType } from './DocumentUpload'; 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Copy, Download } from 'lucide-react';
+import { CheckCircle, Copy, Download, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
 
 interface ExtractedData {
   [key: string]: string;
@@ -21,7 +24,7 @@ const mockExtractedData: Record<DocumentType, ExtractedData> = {
     'PAN Number': 'ABCDE1234F',
     'Full Name': 'RAJESH KUMAR SHARMA',
     'Date of Birth': '15/06/1985',
-    'Father\'s Name': 'SURESH KUMAR SHARMA'
+    "Father's Name": 'SURESH KUMAR SHARMA'
   },
   aadhaar: {
     'Aadhaar Number': '1234-5678-9012',
@@ -42,8 +45,10 @@ const mockExtractedData: Record<DocumentType, ExtractedData> = {
 export function ExtractedFields({ documentType, data, onVerify, capturedImage }: ExtractedFieldsProps) {
   const { toast } = useToast();
   
-  // Use mock data for demonstration
-  const extractedData = mockExtractedData[documentType];
+  const [extractedData, setExtractedData] = useState(mockExtractedData[documentType]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentField, setCurrentField] = useState<string>('');
+  const [currentValue, setCurrentValue] = useState<string>('');
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -77,6 +82,24 @@ export function ExtractedFields({ documentType, data, onVerify, capturedImage }:
     });
   };
 
+  const openEditDialog = (field: string, value: string) => {
+    setCurrentField(field);
+    setCurrentValue(value);
+    setIsDialogOpen(true);
+  };
+
+  const saveEditedValue = () => {
+    setExtractedData(prev => ({
+      ...prev,
+      [currentField]: currentValue
+    }));
+    setIsDialogOpen(false);
+    toast({
+      title: "Updated!",
+      description: `${currentField} was updated successfully.`,
+    });
+  };
+
   return (
     <div className="space-y-6 flex flex-col">
       <div className="flex items-center justify-between">
@@ -86,7 +109,7 @@ export function ExtractedFields({ documentType, data, onVerify, capturedImage }:
             Extracted Information
           </h3>
           <p className="text-sm text-muted-foreground">
-            Review the extracted data for accuracy
+            Review and edit the extracted data for accuracy
           </p>
         </div>
         
@@ -112,19 +135,28 @@ export function ExtractedFields({ documentType, data, onVerify, capturedImage }:
                 <p className="font-medium text-card-foreground">{value}</p>
               </div>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard(value)}
-                className="ml-4"
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(value)}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openEditDialog(field, value)}
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
       </Card>
 
+      {/* Verify button */}
       <div className="flex justify-center">
         <Button 
           onClick={onVerify}
@@ -134,6 +166,23 @@ export function ExtractedFields({ documentType, data, onVerify, capturedImage }:
           Verify & Complete
         </Button>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit {currentField}</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={currentValue}
+            onChange={(e) => setCurrentValue(e.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={saveEditedValue}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
