@@ -116,12 +116,12 @@ export function KYCApp() {
             
             <Progress value={getProgressValue()} className="mb-4" />
             
-            <div className="flex justify-between">
+            <div className="grid grid-cols-1 md:grid-cols-4 justify-between">
               {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center space-x-2">
+                <div key={step.id} className="flex items-center space-x-2 border-b-2 md:border-b-0">
                   <div className={`w-3 h-3 rounded-full ${
                     step.completed ? 'bg-success' :
-                    step.id === currentStep ? 'bg-primary' : 'bg-muted'
+                    step.id === currentStep ? 'bg-primary' : 'bg-gray-200'
                   }`} />
                   <span className={`text-sm ${
                     step.id === currentStep ? 'text-foreground font-medium' : 'text-muted-foreground'
