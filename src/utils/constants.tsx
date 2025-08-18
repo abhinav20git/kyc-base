@@ -4,24 +4,28 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   role: "admin" | "user";
+  profileImage?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type UploadedFile = {
   file: File | null;
   type: DocumentType | null;
-  preview:string | null
+  preview: string | null;
 }
 
-// apiRoutes.js
+// API Configuration
+export const API_BASE = "https://b492b888cfb9.ngrok-free.app/api/v1";
 
-export const API_BASE = "/api";
-
-// Auth
-export const AUTH_REGISTER = `${API_BASE}/auth/register`;
-export const AUTH_LOGIN = `${API_BASE}/auth/login`;
-export const AUTH_LOGOUT = `${API_BASE}/auth/logout`;
-export const AUTH_REFRESH_TOKEN = `${API_BASE}/auth/refresh-token`;
+// Auth Routes
+export const AUTH_REGISTER = `${API_BASE}/users/register`;
+export const AUTH_LOGIN = `${API_BASE}/users/login`;
+export const AUTH_LOGOUT = `${API_BASE}/users/logout`;
+export const AUTH_REFRESH_TOKEN = `${API_BASE}/users/refresh-token`;
 
 // User Profile & KYC
 export const USER_PROFILE = `${API_BASE}/user/profile`;
@@ -48,3 +52,26 @@ export const ADMIN_KYC_REJECT = (userId) => `${API_BASE}/admin/kyc/${userId}/rej
 
 // Misc
 export const SYSTEM_HEALTH = `${API_BASE}/system/health`;
+
+// Token Storage Keys
+export const TOKEN_STORAGE_KEY = "token";
+export const REFRESH_TOKEN_STORAGE_KEY = "refreshToken";
+export const USER_STORAGE_KEY = "user";
+
+// API Response Types
+export interface ApiResponse<T = any> {
+  statusCode: number;
+  data: T;
+  message: string;
+  success: boolean;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  tokens: AuthTokens;
+}
