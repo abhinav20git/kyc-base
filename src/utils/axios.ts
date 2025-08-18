@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { API_BASE, AUTH_REFRESH_TOKEN } from '@/utils/constants';
 
-// Create axios instance
+
 const apiClient = axios.create({
   baseURL: API_BASE, 
   withCredentials: true,
@@ -10,7 +10,7 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -51,10 +51,9 @@ apiClient.interceptors.response.use(
             localStorage.setItem('token', response.data.data.tokens.accessToken);
             localStorage.setItem('refreshToken', response.data.data.tokens.refreshToken);
             
-            // Update the failed request with new token
             originalRequest.headers.Authorization = `Bearer ${response.data.data.tokens.accessToken}`;
             
-            // Retry the original request
+            
             return apiClient(originalRequest);
           }
         }

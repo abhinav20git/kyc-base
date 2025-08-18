@@ -41,14 +41,14 @@ const Login = () => {
       });
 
       if (response.success && response.data) {
-        // Store tokens in localStorage
+      
         localStorage.setItem("token", response.data.tokens.accessToken);
         localStorage.setItem("refreshToken", response.data.tokens.refreshToken);
         
         // Store user data if needed
         localStorage.setItem("user", JSON.stringify(response.data.user));
 
-        // Dispatch event to notify other components of auth state change
+        
         window.dispatchEvent(new Event('authStateChanged'));
 
         toast({
@@ -56,7 +56,7 @@ const Login = () => {
           description: response.message || "Welcome back to your KYC verification dashboard.",
         });
 
-        // Redirect to dashboard
+      
         navigate("/");
       } else {
         throw new Error(response.message || "Login failed");
@@ -94,6 +94,7 @@ const Login = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
@@ -116,12 +117,24 @@ const Login = () => {
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     required
+                    
+                    autoComplete="current-password"
+                    className="pr-12"
                   />
+                  <style jsx>{`
+                    input[type="password"]::-ms-reveal,
+                    input[type="password"]::-ms-clear {
+                      display: none;
+                    }
+                    input[type="password"]::-webkit-credentials-auto-fill-button {
+                      display: none !important;
+                    }
+                  `}</style>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (

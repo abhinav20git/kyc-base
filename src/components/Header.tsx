@@ -49,6 +49,7 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
+      // Call logout API (this will handle errors gracefully)
       await logoutUser();
       
       // Clear local state
@@ -66,10 +67,17 @@ const Header = () => {
       navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
-      // Even if logout API fails, clear local storage and redirect
+      // The logoutUser function already handles cleanup, so we just need to update UI
       setToken(null);
       setUser(null);
       window.dispatchEvent(new Event('authStateChanged'));
+      
+      toast({
+        title: "Logged Out",
+        description: "You have been logged out locally.",
+        variant: "default" // Don't show as error since local logout succeeded
+      });
+      
       navigate("/login");
     }
   };

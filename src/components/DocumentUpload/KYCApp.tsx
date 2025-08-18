@@ -9,8 +9,9 @@ import { Progress } from '@/components/ui/progress';
 import { Shield, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UploadedFile } from '@/utils/constants';
+import { CameraCapture } from '../CameraCapture';
 
-type Step = 'select' | 'upload' | 'extract' | 'complete';
+type Step = 'select' | 'upload' | 'extract' | 'capture' | 'complete';
 
 export function KYCApp() {
   const [currentStep, setCurrentStep] = useState<Step>('select');
@@ -22,8 +23,9 @@ export function KYCApp() {
 
   const steps = [
     { id: 'select', label: 'Select Document', completed: currentStep !== 'select' },
-    { id: 'upload', label: 'Upload Document', completed: ['extract', 'complete'].includes(currentStep) },
-    { id: 'extract', label: 'Extract Data', completed: currentStep === 'complete' },
+    { id: 'upload', label: 'Upload Document', completed: ['extract', 'capture', 'complete'].includes(currentStep) },
+    { id: 'extract', label: 'Extract Data', completed: ['capture', 'complete'].includes(currentStep) },
+    { id: 'capture', label: 'Capture', completed: currentStep === 'complete' },
     { id: 'complete', label: 'Complete', completed: false }
   ];
 
@@ -34,31 +36,41 @@ export function KYCApp() {
 
   const handleFileUpload = async (file: File, type: DocumentType) => {
     try {
-      if(!file.type.startsWith('image/')){
-        throw new Error('Invalid file type, please upload image')
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Invalid file type, please upload image');
       }
-      const preview = URL.createObjectURL(file)
-      setUploadedFile({file, type, preview});
+      const preview = URL.createObjectURL(file);
+      setUploadedFile({ file, type, preview });
+
+      setCurrentStep('extract');
       setIsProcessing(true);
-      // Simulate processing time
-      setTimeout(() => {
-        setIsProcessing(false);
-        setIsSuccess(true);
-        setCurrentStep('extract');
-        toast({
-          title: "Document processed successfully!",
-          description: "All fields have been extracted automatically.",
-        });
-      }, 3000);
+
+      // setTimeout(() => {
+      //   setIsProcessing(false);
+      //   setIsSuccess(true);
+      //   setCurrentStep('extract'); 
+      //   toast({
+      //     title: "Document processed successfully!",
+      //     description: "All fields have been extracted automatically.",
+      //   });
+      // }, 3000);
     } catch (error) {
       toast({
-      title: "Imvalid request",
-      description: error.message,
-    });
+        title: "Invalid request",
+        description: (error as Error).message,
+      });
     }
   };
 
-  const handleVerifyComplete = () => {
+  const handleExtractComplete = () => {
+    setCurrentStep('capture');
+    toast({
+      title: "Data Extraction Complete!",
+      description: "Moving to capture step for verification.",
+    });
+  };
+
+  const handleCaptureComplete = () => {
     setCurrentStep('complete');
     toast({
       title: "KYC Verification Complete!",
@@ -72,17 +84,22 @@ export function KYCApp() {
       setUploadedFile({file: null, type: null, preview: null});
       setIsProcessing(false);
       setIsSuccess(false);
-      setSelectedDocumentType(null)
+      setSelectedDocumentType(null);
     } else if (currentStep === 'extract') {
       setCurrentStep('upload');
+    } else if (currentStep === 'capture') {
+      setCurrentStep('extract');
+      setIsProcessing(false); 
+      setIsSuccess(false);
     }
   };
 
   const getProgressValue = () => {
     switch (currentStep) {
-      case 'select': return 25;
-      case 'upload': return 50;
-      case 'extract': return 75;
+      case 'select': return 20;
+      case 'upload': return 40;
+      case 'extract': return 60;
+      case 'capture': return 80;
       case 'complete': return 100;
       default: return 0;
     }
@@ -91,7 +108,7 @@ export function KYCApp() {
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
+      
         <div className="text-center space-y-4 mb-8">
           <div className="flex items-center justify-center space-x-2">
             <Shield className="w-8 h-8 text-primary" />
@@ -110,13 +127,13 @@ export function KYCApp() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-card-foreground">Verification Progress</h3>
               <Badge variant="outline" className="bg-primary/10">
-                Step {Math.min(steps.findIndex(s => s.id === currentStep) + 1, 4)} of 4
+                Step {Math.min(steps.findIndex(s => s.id === currentStep) + 1, 5)} of 5
               </Badge>
             </div>
             
             <Progress value={getProgressValue()} className="mb-4" />
             
-            <div className="grid grid-cols-1 md:grid-cols-4 justify-between">
+            <div className="grid grid-cols-1 md:grid-cols-5 justify-between">
               {steps.map((step, index) => (
                 <div key={step.id} className="flex items-center space-x-2 border-b-2 md:border-b-0">
                   <div className={`w-3 h-3 rounded-full ${
@@ -178,8 +195,18 @@ export function KYCApp() {
             <ExtractedFields
               documentType={selectedDocumentType}
               data={{}}
-              onVerify={handleVerifyComplete}
+              onVerify={handleExtractComplete}
               uploadedFile={uploadedFile || undefined}
+            />
+          )}
+
+          {currentStep === 'capture' && (
+            <CameraCapture
+              onCapture={(file, preview) => {
+                setUploadedFile({ file, type: selectedDocumentType, preview });
+                handleCaptureComplete();
+              }}
+              onCancel={() => setCurrentStep("extract")}
             />
           )}
 

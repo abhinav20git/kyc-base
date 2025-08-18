@@ -1,6 +1,6 @@
 import { AUTH_REGISTER, AUTH_LOGIN, AUTH_LOGOUT, AUTH_REFRESH_TOKEN } from "@/utils/constants"
-// Update the import path if "@/utils/axios" does not exist
-import apiClient from "../utils/axios" // Import the configured axios instance
+
+import apiClient from "../utils/axios" 
 
 export const registerUser = async ({ name, email, password }) => {
     try {
