@@ -107,7 +107,7 @@ export const KYCWorkflow: React.FC = () => {
     },
     {
       name: 'Amit Patel',
-      role: 'Startup Founder',
+      role: 'Startup Founder', 
       content: 'This platform has streamlined our customer onboarding process significantly.',
       rating: 5
     }
