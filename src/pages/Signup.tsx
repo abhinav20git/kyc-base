@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, Shield, ChevronRight, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { registerUser } from '@/api/auth';
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -22,45 +23,50 @@ const Signup = () => {
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.captcha) {
-      toast({
-        title: "Verification Required",
-        description: "Please complete the reCAPTCHA verification.",
-        variant: "destructive"
-      });
-      return;
-    }
+    try {
+      e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match. Please check and try again.",
-        variant: "destructive"
-      });
-      return;
-    }
+      if (!formData.captcha) {
+        toast({
+          title: "Verification Required",
+          description: "Please complete the reCAPTCHA verification.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    if (formData.password.length < 8) {
-      toast({
-        title: "Password Too Short",
-        description: "Password must be at least 8 characters long.",
-        variant: "destructive"
-      });
-      return;
-    }
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: "Password Mismatch",
+          description: "Passwords do not match. Please check and try again.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    setIsLoading(true);
-    
-    // Simulate signup process
-    setTimeout(() => {
-      setIsLoading(false);
+      if (formData.password.length < 8) {
+        toast({
+          title: "Password Too Short",
+          description: "Password must be at least 8 characters long.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setIsLoading(true);
+
+      const response = await registerUser({ name: formData.fullName, email: formData.email, password: formData.password })
       toast({
         title: "Account Created Successfully",
         description: "Welcome! Your KYC verification account has been created.",
       });
-    }, 2000);
+      setIsLoading(() => false)
+    } catch (error) {
+        toast({
+          title: "Something went wrong",
+          description: error.message || 'Please try again after some time',
+        });
+    }
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -71,7 +77,7 @@ const Signup = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-       
+
           <h1 className="text-3xl font-bold mb-2">Create Account</h1>
           <p className="text-muted-foreground">Join our secure KYC verification platform</p>
         </div>
