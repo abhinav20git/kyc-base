@@ -1,0 +1,17 @@
+.amplify-liveness-oval-canvas > canvas{
+    display: none;
+}
+.amplify-liveness-connecting-loader svg g circle[data-testid="circular-empty"],
+.amplify-liveness-connecting-loader svg g circle[data-testid="circular-filled"] {
+  display: none !important;
+}
+
+.amplify-liveness-connecting-loader{
+    display: none !important;
+}
+.amplify-liveness-start-screen-warning{
+    display: none;
+}
+[class="amplify-loader amplify-loader--large amplify-liveness-centered-loader"]{
+    display: none;
+}

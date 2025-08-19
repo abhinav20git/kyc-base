@@ -75,3 +75,31 @@ export interface AuthResponse {
   user: User;
   tokens: AuthTokens;
 }
+
+// AWS rekognition
+// Identity Pool ID
+
+export const AWS_REGION = "ap-south-1"
+export const Identity_Pool_Id = `${AWS_REGION}:5fa68ef7-5ba0-451d-8e61-b23e42480eba`;
+export const Allow_Guest_Access = true
+
+export interface LivenessResult {
+  SessionId: string;
+  Status: string;
+  Confidence?: number;
+  ReferenceImage?: {
+    BoundingBox?: any;
+    S3Object?: {
+      Bucket: string;
+      Name: string;
+    };
+    Bytes: string
+  };
+}
+
+export interface ComparisonResult {
+  isMatch: boolean;
+  confidence: number;
+  faceMatches: number;
+  threshold: number;
+}
