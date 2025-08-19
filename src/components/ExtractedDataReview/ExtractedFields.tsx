@@ -125,13 +125,15 @@ export function ExtractedFields({ documentType, data, onVerify }: ExtractedField
       </Card>
 
       <div className="flex justify-center">
-        <Button 
-          onClick={onVerify}
-          className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 px-8"
-        >
-          <CheckCircle className="w-4 h-4 mr-2" />
-          Verify & Complete
-        </Button>
+        <div className="flex justify-center">
+  <Button 
+    onClick={onVerify}
+    className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 px-8"
+  >
+    <CheckCircle className="w-4 h-4 mr-2" />
+    Move to Face Detection
+  </Button>
+</div>
       </div>
     </div>
   );
