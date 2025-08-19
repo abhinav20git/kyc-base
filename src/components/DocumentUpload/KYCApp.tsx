@@ -10,6 +10,7 @@ import { Shield, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UploadedFile } from '@/utils/constants';
 import { CameraCapture } from '../CameraCapture';
+import { uploadDocument } from '@/api/upload';
 
 type Step = 'select' | 'upload' | 'extract' | 'capture' | 'complete';
 
@@ -18,6 +19,7 @@ export function KYCApp() {
   const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType>(null);
   const [uploadedFile, setUploadedFile] = useState<UploadedFile>({file: null, type: null, preview: null});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [extractedData,setExtractedData]=useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
@@ -30,37 +32,52 @@ export function KYCApp() {
   ];
 
   const handleDocumentTypeSelect = (type: DocumentType) => {
+    console.log(type)
     setSelectedDocumentType(type);
     setCurrentStep('upload');
   };
 
-  const handleFileUpload = async (file: File, type: DocumentType) => {
-    try {
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Invalid file type, please upload image');
-      }
-      const preview = URL.createObjectURL(file);
-      setUploadedFile({ file, type, preview });
-
-      setCurrentStep('extract');
-      setIsProcessing(true);
-
-      // setTimeout(() => {
-      //   setIsProcessing(false);
-      //   setIsSuccess(true);
-      //   setCurrentStep('extract'); 
-      //   toast({
-      //     title: "Document processed successfully!",
-      //     description: "All fields have been extracted automatically.",
-      //   });
-      // }, 3000);
-    } catch (error) {
-      toast({
-        title: "Invalid request",
-        description: (error as Error).message,
-      });
+const handleFileUpload = async (file: File, type: DocumentType) => {
+  try {
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Invalid file type, please upload image");
     }
-  };
+    const preview = URL.createObjectURL(file);
+    setUploadedFile({ file, type, preview });
+
+    
+    setIsProcessing(true);
+
+    const data = await uploadDocument(file, type);
+
+    // console.log("Server response:", data);
+   
+   if(data.data.predicted_class.toLowerCase() !== type){
+      toast({
+        title: "Wrong Document format selected!",
+        description: "You have selected wrong format for this document type.",
+      });
+      setIsProcessing(false);
+      setCurrentStep("upload");
+      return; 
+    }
+     setExtractedData(data.data.extracted_data)
+    setIsProcessing(false);
+    setIsSuccess(true);
+     setCurrentStep("extract")
+
+    toast({
+      title: "Document processed successfully!",
+      description: "All fields have been extracted automatically.",
+    });
+  } catch (error) {
+    setIsProcessing(false);
+    toast({
+      title: "Invalid request",
+      description: (error as Error).message,
+    });
+  }
+};
 
   const handleExtractComplete = () => {
     setCurrentStep('capture');
@@ -151,7 +168,7 @@ export function KYCApp() {
           </div>
         </Card>
 
-        {/* Back Button */}
+        
         {currentStep !== 'select' && currentStep !== 'complete' && (
           <div className="mb-6">
             <Button variant="outline" onClick={handleBack}>
@@ -194,7 +211,7 @@ export function KYCApp() {
           {currentStep === 'extract' && (
             <ExtractedFields
               documentType={selectedDocumentType}
-              data={{}}
+              data={extractedData}
               onVerify={handleExtractComplete}
               uploadedFile={uploadedFile || undefined}
             />

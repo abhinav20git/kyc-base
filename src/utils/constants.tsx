@@ -19,7 +19,7 @@ export type UploadedFile = {
 }
 
 // API Configuration
-export const API_BASE = "https://b492b888cfb9.ngrok-free.app/api/v1";
+export const API_BASE = "https://981372dd1a73.ngrok-free.app/api/v1";
 
 // Auth Routes
 export const AUTH_REGISTER = `${API_BASE}/users/register`;
@@ -35,7 +35,7 @@ export const USER_KYC_STATUS = `${API_BASE}/user/kyc-status`;
 // Document Upload & Verification
 export const KYC_UPLOAD_ID = `${API_BASE}/kyc/upload-id`;
 export const KYC_UPLOAD_ADDRESS_PROOF = `${API_BASE}/kyc/upload-address-proof`;
-export const KYC_UPLOAD_SELFIE = `${API_BASE}/kyc/upload-selfie`;
+export const KYC_UPLOAD_IMAGE = `${API_BASE}/users/process-document`;
 export const KYC_GET_DOCUMENTS = `${API_BASE}/kyc/documents`;
 export const KYC_DELETE_DOCUMENT = (id) => `${API_BASE}/kyc/document/${id}`;
 
