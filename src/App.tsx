@@ -13,12 +13,8 @@ import ProtectedRoute from "./components/ProtectedRoute"; // import the wrapper
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { UserContextProvider } from "./context/UserContext";
-<<<<<<< HEAD
-// import FaceCapture from "./components/FaceCapture/FaceCapture";
-=======
 import { useToast } from "./hooks/use-toast";
 
->>>>>>> 29dc89f
 const queryClient = new QueryClient();
 
 const App = () => (
