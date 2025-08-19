@@ -109,7 +109,7 @@ export function DocumentUpload({
 
   const getStatusText = () => {
     if (isSuccess) return 'Document processed successfully';
-    if (isProcessing) return 'Processing document...';
+    if (isProcessing) return 'Processing...';
     if (uploadedFile) return uploadedFile.file?.name;
     return `Drop your ${documentTypeLabels[documentType]} here or click to browse`;
   };

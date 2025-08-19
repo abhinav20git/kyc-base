@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, Shield, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { loginUser } from '@/api/auth';
 
 const Login = () => {
-  
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -19,38 +20,60 @@ const Login = () => {
   });
   const { toast } = useToast();
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  if (!formData.captcha) {
-    toast({
-      title: "Verification Required",
-      description: "Please complete the reCAPTCHA verification.",
-      variant: "destructive"
-    });
-    return;
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.captcha) {
+      toast({
+        title: "Verification Required",
+        description: "Please complete the reCAPTCHA verification.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-  setIsLoading(true);
+    setIsLoading(true);
 
-  // Simulate login process
-  setTimeout(() => {
-    // ✅ Store dummy token
-    localStorage.setItem("token", "dummy-auth-token");
+    try {
+      const response = await loginUser({ 
+        email: formData.email, 
+        password: formData.password 
+      });
 
-    setIsLoading(false);
-    toast({
-      title: "Login Successful",
-      description: "Welcome back to your KYC verification dashboard.",
-    });
+      if (response.success && response.data) {
+      
+        localStorage.setItem("token", response.data.tokens.accessToken);
+        localStorage.setItem("refreshToken", response.data.tokens.refreshToken);
+        
+        // Store user data if needed
+        localStorage.setItem("user", JSON.stringify(response.data.user));
 
-    // ✅ Redirect to index/dashboard
-    window.location.href = "/";
-  }, 2000);
-};
+        
+        window.dispatchEvent(new Event('authStateChanged'));
 
+        toast({
+          title: "Login Successful",
+          description: response.message || "Welcome back to your KYC verification dashboard.",
+        });
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+      
+        navigate("/");
+      } else {
+        throw new Error(response.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Login Failed",
+        description: error.response?.data?.message || error.message || "Please check your credentials and try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -58,7 +81,6 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          
           <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
           <p className="text-muted-foreground">Sign in to your KYC verification account</p>
         </div>
@@ -72,6 +94,7 @@ const Login = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
@@ -94,12 +117,24 @@ const Login = () => {
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     required
+                    
+                    autoComplete="current-password"
+                    className="pr-12"
                   />
+                  <style jsx>{`
+                    input[type="password"]::-ms-reveal,
+                    input[type="password"]::-ms-clear {
+                      display: none;
+                    }
+                    input[type="password"]::-webkit-credentials-auto-fill-button {
+                      display: none !important;
+                    }
+                  `}</style>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -117,7 +152,7 @@ const Login = () => {
                   <Checkbox
                     id="captcha"
                     checked={formData.captcha}
-                    onCheckedChange={(checked) => handleInputChange('captcha', checked as boolean)}
+                    onCheckedChange={(checked) => handleInputChange('captcha', checked)}
                   />
                   <Label htmlFor="captcha" className="text-sm">
                     I'm not a robot

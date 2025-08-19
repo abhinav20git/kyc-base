@@ -22,12 +22,14 @@ export function KYCApp() {
   const { toast } = useToast();
 
   const steps = [
+
   { id: 'select', label: 'Select Document', completed: currentStep !== 'select' },
   { id: 'upload', label: 'Upload Document', completed: ['extract', 'face', 'complete'].includes(currentStep) },
   { id: 'extract', label: 'Extract Data', completed: ['face', 'complete'].includes(currentStep) },
   { id: 'face', label: 'Face Detection', completed: currentStep === 'complete' },
   { id: 'complete', label: 'Complete', completed: false }
 ];
+
 
   const handleDocumentTypeSelect = (type: DocumentType) => {
     setSelectedDocumentType(type);
@@ -36,31 +38,41 @@ export function KYCApp() {
 
   const handleFileUpload = async (file: File, type: DocumentType) => {
     try {
-      if(!file.type.startsWith('image/')){
-        throw new Error('Invalid file type, please upload image')
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Invalid file type, please upload image');
       }
-      const preview = URL.createObjectURL(file)
-      setUploadedFile({file, type, preview});
+      const preview = URL.createObjectURL(file);
+      setUploadedFile({ file, type, preview });
+
+      setCurrentStep('extract');
       setIsProcessing(true);
-      // Simulate processing time
-      setTimeout(() => {
-        setIsProcessing(false);
-        setIsSuccess(true);
-        setCurrentStep('extract');
-        toast({
-          title: "Document processed successfully!",
-          description: "All fields have been extracted automatically.",
-        });
-      }, 3000);
+
+      // setTimeout(() => {
+      //   setIsProcessing(false);
+      //   setIsSuccess(true);
+      //   setCurrentStep('extract'); 
+      //   toast({
+      //     title: "Document processed successfully!",
+      //     description: "All fields have been extracted automatically.",
+      //   });
+      // }, 3000);
     } catch (error) {
       toast({
-      title: "Imvalid request",
-      description: error.message,
-    });
+        title: "Invalid request",
+        description: (error as Error).message,
+      });
     }
   };
 
-  const handleVerifyComplete = () => {
+  const handleExtractComplete = () => {
+    setCurrentStep('capture');
+    toast({
+      title: "Data Extraction Complete!",
+      description: "Moving to capture step for verification.",
+    });
+  };
+
+  const handleCaptureComplete = () => {
     setCurrentStep('complete');
     toast({
       title: "KYC Verification Complete!",
@@ -96,7 +108,7 @@ export function KYCApp() {
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
+      
         <div className="text-center space-y-4 mb-8">
           <div className="flex items-center justify-center space-x-2">
             <Shield className="w-8 h-8 text-primary" />
@@ -204,6 +216,15 @@ export function KYCApp() {
     onCapture={() => handleVerifyComplete()} 
   />
 )}
+          {currentStep === 'capture' && (
+            <CameraCapture
+              onCapture={(file, preview) => {
+                setUploadedFile({ file, type: selectedDocumentType, preview });
+                handleCaptureComplete();
+              }}
+              onCancel={() => setCurrentStep("extract")}
+            />
+          )}
 
           {currentStep === 'complete' && (
             <Card className="max-w-md mx-auto bg-gradient-to-br from-success/10 to-primary/5 border-success/20">
