@@ -202,11 +202,7 @@ export function KYCApp() {
 
           {currentStep === 'capture' && (
             <CameraCapture
-              onCapture={(file, preview) => {
-                setUploadedFile({ file, type: selectedDocumentType, preview });
-                handleCaptureComplete();
-              }}
-              onCancel={() => setCurrentStep("extract")}
+              idPhoto={uploadedFile.file}
             />
           )}
 

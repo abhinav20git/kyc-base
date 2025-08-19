@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute"; // import the wrapper
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { UserContextProvider } from "./context/UserContext";
+import { useToast } from "./hooks/use-toast";
 
 const queryClient = new QueryClient();
 
