@@ -36,7 +36,7 @@ const mockExtractedData: Record<DocumentType, ExtractedData> = {
   },
   passport: {
     'Passport Number': 'A1234567',
-    'Full Name': 'RAJESH KUMAR SHARMA',
+    'Full Name': 'RAJESH KUMAR SHARMA' ,
     'Date of Birth': '15/06/1985',
     'Place of Birth': 'NEW DELHI',
     'Nationality': 'INDIAN'

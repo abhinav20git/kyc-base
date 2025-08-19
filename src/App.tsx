@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute"; // import the wrapper
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { UserContextProvider } from "./context/UserContext";
+import Profile from "./components/Profile";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
                 <Route path="/" element={< KYCWorkflow />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/profile" element={<Profile/>} />
                 <Route
                   path="/kyc-verification"
                   element={

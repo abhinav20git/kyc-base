@@ -10,6 +10,7 @@ import { Shield, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UploadedFile } from '@/utils/constants';
 import { CameraCapture } from '../CameraCapture';
+import ChatbotWidget from '../ChatWidget';
 
 type Step = 'select' | 'upload' | 'extract' | 'capture' | 'complete';
 
@@ -244,7 +245,9 @@ export function KYCApp() {
             </Card>
           )}
         </div>
+        <ChatbotWidget/>
       </div>
+      
     </div>
   );
 }
