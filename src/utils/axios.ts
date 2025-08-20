@@ -39,11 +39,9 @@ apiClient.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken && refreshToken !== 'undefined' && refreshToken !== 'null') {
           
-          const response = await axios.post(AUTH_REFRESH_TOKEN, {}, {
+          const response = await axios.post(AUTH_REFRESH_TOKEN, {refreshToken:refreshToken}, {
             withCredentials: true,
-            headers: {
-              'Authorization': `Bearer ${refreshToken}`
-            }
+          
           });
 
           if (response.data.success && response.data.data.tokens) {

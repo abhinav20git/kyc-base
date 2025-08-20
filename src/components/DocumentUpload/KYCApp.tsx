@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DocumentTypeSelector } from '../DocumentTypeSelector';
 import { DocumentUpload, DocumentType } from '../DocumentUpload';
-import { ExtractedFields } from '../ExtractedFields';
+
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UploadedFile } from '@/utils/constants';
 import { CameraCapture } from '../CameraCapture';
 import { uploadDocument } from '@/api/upload';
+import { ExtractedFields } from '../ExtractedFields';
 
 type Step = 'select' | 'upload' | 'extract' | 'capture' | 'complete';
 
@@ -49,8 +50,6 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
     setIsProcessing(true);
 
     const data = await uploadDocument(file, type);
-
-    // console.log("Server response:", data);
    
    if(data.data.predicted_class.toLowerCase() !== type){
       toast({

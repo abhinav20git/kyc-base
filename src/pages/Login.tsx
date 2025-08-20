@@ -1,33 +1,39 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Eye, EyeOff, Shield, ChevronRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { loginUser } from '@/api/auth';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Eye, EyeOff, Shield, ChevronRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { loginUser } from "@/api/auth";
 
 const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    captcha: false
+    email: "",
+    password: "",
+    captcha: false,
   });
   const { toast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.captcha) {
       toast({
         title: "Verification Required",
         description: "Please complete the reCAPTCHA verification.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -35,28 +41,26 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await loginUser({ 
-        email: formData.email, 
-        password: formData.password 
+      const response = await loginUser({
+        email: formData.email,
+        password: formData.password,
       });
 
       if (response.success && response.data) {
-      
         localStorage.setItem("token", response.data.tokens.accessToken);
         localStorage.setItem("refreshToken", response.data.tokens.refreshToken);
-        
-        // Store user data if needed
         localStorage.setItem("user", JSON.stringify(response.data.user));
 
         
-        window.dispatchEvent(new Event('authStateChanged'));
+        window.dispatchEvent(new Event("authStateChanged"));
 
         toast({
           title: "Login Successful",
-          description: response.message || "Welcome back to your KYC verification dashboard.",
+          description:
+            response.message ||
+            "Welcome back to your KYC verification dashboard.",
         });
 
-      
         navigate("/");
       } else {
         throw new Error(response.message || "Login failed");
@@ -65,8 +69,11 @@ const Login = () => {
       console.error("Login error:", error);
       toast({
         title: "Login Failed",
-        description: error.response?.data?.message || error.message || "Please check your credentials and try again.",
-        variant: "destructive"
+        description:
+          error.response?.data?.message ||
+          error.message ||
+          "Please check your credentials and try again.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -74,7 +81,7 @@ const Login = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -82,7 +89,9 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in to your KYC verification account</p>
+          <p className="text-muted-foreground">
+            Sign in to your KYC verification account
+          </p>
         </div>
 
         <Card>
@@ -94,7 +103,6 @@ const Login = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
@@ -102,14 +110,14 @@ const Login = () => {
                   type="email"
                   placeholder="Enter your email"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <div className="relative">
+                {/* <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -143,6 +151,50 @@ const Login = () => {
                       <Eye className="h-4 w-4 text-muted-foreground" />
                     )}
                   </Button>
+                </div> */}
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={(e) =>
+                      handleInputChange("password", e.target.value)
+                    }
+                    required
+                    autoComplete="current-password"
+                    className="pr-12"
+                    style={{
+                      WebkitAppearance: "none",
+                      MozAppearance: "textfield",
+                    }}
+                  />
+                  <style
+                    dangerouslySetInnerHTML={{
+                      __html: `
+      input[type="password"]::-ms-reveal,
+      input[type="password"]::-ms-clear {
+        display: none;
+      }
+      input[type="password"]::-webkit-credentials-auto-fill-button {
+        display: none !important;
+      }
+    `,
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
                 </div>
               </div>
 
@@ -152,7 +204,9 @@ const Login = () => {
                   <Checkbox
                     id="captcha"
                     checked={formData.captcha}
-                    onCheckedChange={(checked) => handleInputChange('captcha', checked)}
+                    onCheckedChange={(checked) =>
+                      handleInputChange("captcha", checked)
+                    }
                   />
                   <Label htmlFor="captcha" className="text-sm">
                     I'm not a robot
@@ -168,11 +222,7 @@ const Login = () => {
                 </p>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   "Signing in..."
                 ) : (
@@ -186,8 +236,11 @@ const Login = () => {
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <Link to="/signup" className="text-primary hover:underline font-medium">
+                Don't have an account?{" "}
+                <Link
+                  to="/signup"
+                  className="text-primary hover:underline font-medium"
+                >
                   Create one here
                 </Link>
               </p>

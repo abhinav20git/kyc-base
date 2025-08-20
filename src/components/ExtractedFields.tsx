@@ -53,7 +53,7 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
   const [currentField, setCurrentField] = useState<string>('');
   const [currentValue, setCurrentValue] = useState<string>('');
   const [loading, setLoading] = useState(true);
-
+  const [currentFieldLabel, setCurrentFieldLabel] = useState<string>('');
   useEffect(() => {
     if (data && Object.keys(data).length > 0) {
       setExtractedData(data);
@@ -61,7 +61,7 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
     }
   }, [data]);
 
-  // Show loading state until data arrives
+  
   if (loading) {
     return (
       <div className="space-y-6 flex flex-col">
@@ -107,16 +107,18 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
     });
   };
 
-  const openEditDialog = (field: string, value: string) => {
-    setCurrentField(field);
-    setCurrentValue(value);
-    setIsDialogOpen(true);
-  };
+  const openEditDialog = (field: string, label: string, value: string) => {
+  setCurrentField(field);       
+  setCurrentFieldLabel(label);   
+  setCurrentValue(value);
+  setIsDialogOpen(true);
+};
 
   const saveEditedValue = () => {
     setExtractedData(prev => ({
       ...prev,
       [currentField]: currentValue
+      
     }));
     setIsDialogOpen(false);
     toast({
@@ -125,7 +127,6 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
     });
   };
 
-  // Show loading state if no data is available
   if (!extractedData || Object.keys(extractedData).length === 0) {
     return (
       <div className="space-y-6 flex flex-col">
@@ -160,21 +161,15 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
         </div>
       </div>
       {
-        uploadedFile.file?.type.startsWith('image/') && <img src={uploadedFile.preview} alt="" width={'420px'} height={"320px"} className='self-center rounded border-2 border-blue-500' />
+        uploadedFile.file?.type.startsWith('image/') &&
+         <img src={uploadedFile.preview} alt="" width={'420px'} height={"320px"} 
+         className='self-center rounded border-2 border-blue-500' />
       }
-      {
-        uploadedFile.file?.type === 'application/pdf' && (
-          <iframe
-            src={uploadedFile.preview}
-            className="w-full h-64"
-            title="PDF Preview"
-          ></iframe>
-        )
-      }
+     
       <Card className="bg-gradient-to-br from-card to-secondary/20 border">
         <div className="p-6 gap-4 grid grid-cols-1 md:grid-cols-2 items-center">
           {Object.entries(extractedData).map(([field, value], i, data) => {
-  const label = fieldLabels[documentType]?.[field] || field; // fallback to raw key
+  const label = fieldLabels[documentType]?.[field] || field; 
   return (
     <div
       key={field}
@@ -198,7 +193,7 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => openEditDialog(label, value)} // pass label instead of raw key
+          onClick={() => openEditDialog(field,label, value)} 
         >
           <Pencil className="w-4 h-4" />
         </Button>

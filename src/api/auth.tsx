@@ -12,9 +12,6 @@ export const registerUser = async ({ name, email, password }) => {
             throw new Error('All fields must contain valid data')
         }
 
-        console.log("Making registration request to:", AUTH_REGISTER);
-        console.log("Request payload:", { name, email, password: "***hidden***" });
-
         const response = await apiClient.post(AUTH_REGISTER, {
             name: name.trim(), 
             email: email.trim(), 
@@ -31,16 +28,16 @@ export const registerUser = async ({ name, email, password }) => {
             url: AUTH_REGISTER
         });
 
-        // Handle axios errors properly
+        
         if (error.response) {
-            // Server responded with error status
+        
             const errorMessage = error.response.data?.message || `Registration failed (${error.response.status})`;
             throw new Error(errorMessage);
         } else if (error.request) {
-            // Request made but no response
+            
             throw new Error('Network error. Please check your connection and API URL.');
         } else {
-            // Something else happened
+        
             throw error;
         }
     }
@@ -89,30 +86,30 @@ export const logoutUser = async () => {
     }
 }
 
-export const authTokenRefresh = async () => {
-    try {
-        const response = await apiClient.post(AUTH_REFRESH_TOKEN, {})
-        const data = response.data
+// export const authTokenRefresh = async () => {
+//     try {
+//         const response = await apiClient.post(AUTH_REFRESH_TOKEN, {})
+//         const data = response.data
         
-        if (data.success && data.data && data.data.tokens) {
-            localStorage.setItem('token', data.data.tokens.accessToken)
-            localStorage.setItem('refreshToken', data.data.tokens.refreshToken)
-            return data
-        } else {
-            throw new Error('Token refresh failed')
-        }
-    } catch (error) {
+//         if (data.success && data.data && data.data.tokens) {
+//             localStorage.setItem('token', data.data.tokens.accessToken)
+//             localStorage.setItem('refreshToken', data.data.tokens.refreshToken)
+//             return data
+//         } else {
+//             throw new Error('Token refresh failed')
+//         }
+//     } catch (error) {
 
-        localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
+//         localStorage.removeItem('token')
+//         localStorage.removeItem('refreshToken')
+//         localStorage.removeItem('user')
         
-        if (error.response) {
-            throw new Error(error.response.data.message || 'Token refresh failed');
-        } else if (error.request) {
-            throw new Error('Network error. Please check your connection.');
-        } else {
-            throw error;
-        }
-    }
-}
+//         if (error.response) {
+//             throw new Error(error.response.data.message || 'Token refresh failed');
+//         } else if (error.request) {
+//             throw new Error('Network error. Please check your connection.');
+//         } else {
+//             throw error;
+//         }
+//     }
+// }
