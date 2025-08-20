@@ -55,7 +55,9 @@ export function DocumentTypeSelector({ selectedType, onTypeSelect }: DocumentTyp
                   ? "ring-2 ring-primary bg-primary/5 shadow-md" 
                   : "hover:shadow-medium"
               )}
-              onClick={() => onTypeSelect(doc.type)}
+              onClick={() =>{ 
+                console.log(doc.type)
+                onTypeSelect(doc.type)}}
             >
               <div className="p-6 space-y-4">
                 <div className="flex items-center justify-between">

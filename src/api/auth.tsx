@@ -56,15 +56,15 @@ export const loginUser = async ({ email, password }) => {
         })
         return response.data;
     } catch (error) {
-        // Handle axios errors properly
+        
         if (error.response) {
-            // Server responded with error status
+            
             throw new Error(error.response.data.message || 'Login failed');
         } else if (error.request) {
-            // Request made but no response
+            
             throw new Error('Network error. Please check your connection.');
         } else {
-            // Something else happened
+        
             throw error;
         }
     }
@@ -74,15 +74,15 @@ export const logoutUser = async () => {
     try {
         const token = localStorage.getItem('token');
         
-        // Only call API if we have a token
+        
         if (token && token !== 'undefined' && token !== 'null') {
             await apiClient.post(AUTH_LOGOUT, {});
         }
     } catch (error) {
         console.log("Logout API call failed, but proceeding with local cleanup:", error.message);
-        // Don't throw error - we still want to clear local storage
+        
     } finally {
-        // Always clear local storage regardless of API call success/failure
+        
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
@@ -102,7 +102,7 @@ export const authTokenRefresh = async () => {
             throw new Error('Token refresh failed')
         }
     } catch (error) {
-        // Clear tokens if refresh fails
+
         localStorage.removeItem('token')
         localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')

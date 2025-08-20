@@ -20,19 +20,19 @@ interface ExtractedFieldsProps {
   uploadedFile: UploadedFile
 }
 
-const mockExtractedData: Record<DocumentType, ExtractedData> = {
+const fieldLabels: Record<DocumentType, Record<string, string>> = {
   pan: {
-    'PAN Number': 'ABCDE1234F',
-    'Full Name': 'RAJESH KUMAR SHARMA',
-    'Date of Birth': '15/06/1985',
-    "Father's Name": 'SURESH KUMAR SHARMA'
+    pan_number: "PAN Number",
+    name: "Full Name",
+    dob: "Date of Birth",
+    father_name: "Father's Name",
   },
   aadhaar: {
-    'Aadhaar Number': '1234-5678-9012',
-    'Full Name': 'RAJESH KUMAR SHARMA',
-    'Date of Birth': '15/06/1985',
-    'Gender': 'Male',
-    'Address': '123, MG Road, Bengaluru, Karnataka - 560001',
+    aadhaar_number: "Aadhaar Number",
+    name: "Full Name",
+    dob: "Date of Birth",
+    gender: "Gender",
+    address: "Address",
   },
   passport: {
     'Passport Number': 'A1234567',
@@ -45,10 +45,35 @@ const mockExtractedData: Record<DocumentType, ExtractedData> = {
 
 export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: ExtractedFieldsProps) {
   const { toast } = useToast();
-  const [extractedData, setExtractedData] = useState(mockExtractedData[documentType]);
+  
+  const [extractedData, setExtractedData] = useState<ExtractedData>(
+    data || {}
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentField, setCurrentField] = useState<string>('');
   const [currentValue, setCurrentValue] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (data && Object.keys(data).length > 0) {
+      setExtractedData(data);
+      setLoading(false);
+    }
+  }, [data]);
+
+  // Show loading state until data arrives
+  if (loading) {
+    return (
+      <div className="space-y-6 flex flex-col">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center space-y-2">
+            <p className="text-muted-foreground">Processing document...</p>
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -100,6 +125,20 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
     });
   };
 
+  // Show loading state if no data is available
+  if (!extractedData || Object.keys(extractedData).length === 0) {
+    return (
+      <div className="space-y-6 flex flex-col">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center space-y-2">
+            <p className="text-muted-foreground">Processing document...</p>
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 flex flex-col">
       <div className="flex items-center justify-between">
@@ -121,10 +160,10 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
         </div>
       </div>
       {
-        uploadedFile.file.type.startsWith('image/') && <img src={uploadedFile.preview} alt="" width={'420px'} height={"320px"} className='self-center rounded border-2 border-blue-500' />
+        uploadedFile.file?.type.startsWith('image/') && <img src={uploadedFile.preview} alt="" width={'420px'} height={"320px"} className='self-center rounded border-2 border-blue-500' />
       }
       {
-        uploadedFile.file?.type == 'application/pdf' && (
+        uploadedFile.file?.type === 'application/pdf' && (
           <iframe
             src={uploadedFile.preview}
             className="w-full h-64"
@@ -134,36 +173,40 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
       }
       <Card className="bg-gradient-to-br from-card to-secondary/20 border">
         <div className="p-6 gap-4 grid grid-cols-1 md:grid-cols-2 items-center">
-          {Object.entries(extractedData).map(([field, value], i, data) => (
-            <div
-              key={field}
-              className={`h-21 flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow ${i % 2 == 0 && i + 1 == data.length ? 'md:col-span-2' : ''}`}
-            >
-              <div className="space-y-1 flex-1">
-                <Badge variant="outline" className="text-xs">
-                  {field}
-                </Badge>
-                <p className="font-medium text-card-foreground">{value}</p>
-              </div>
+          {Object.entries(extractedData).map(([field, value], i, data) => {
+  const label = fieldLabels[documentType]?.[field] || field; // fallback to raw key
+  return (
+    <div
+      key={field}
+      className={`h-21 flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow ${i % 2 == 0 && i + 1 == data.length ? 'md:col-span-2' : ''}`}
+    >
+      <div className="space-y-1 flex-1">
+        <Badge variant="outline" className="text-xs">
+          {label}
+        </Badge>
+        <p className="font-medium text-card-foreground">{value}</p>
+      </div>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(value)}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openEditDialog(field, value)}
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => copyToClipboard(value)}
+        >
+          <Copy className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => openEditDialog(label, value)} // pass label instead of raw key
+        >
+          <Pencil className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+})}
+
         </div>
       </Card>
 
@@ -173,8 +216,8 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
           onClick={onVerify}
           className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 px-8"
         >
-          <CheckCircle className="w-4 h-4 mr-2" />
-          Verify & Complete
+          
+          Capture Face
         </Button>
       </div>
 

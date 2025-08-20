@@ -35,7 +35,7 @@ export const USER_KYC_STATUS = `${API_BASE}/user/kyc-status`;
 // Document Upload & Verification
 export const KYC_UPLOAD_ID = `${API_BASE}/kyc/upload-id`;
 export const KYC_UPLOAD_ADDRESS_PROOF = `${API_BASE}/kyc/upload-address-proof`;
-export const KYC_UPLOAD_SELFIE = `${API_BASE}/kyc/upload-selfie`;
+export const KYC_UPLOAD_IMAGE = `${API_BASE}/users/process-document`;
 export const KYC_GET_DOCUMENTS = `${API_BASE}/kyc/documents`;
 export const KYC_DELETE_DOCUMENT = (id) => `${API_BASE}/kyc/document/${id}`;
 
@@ -74,4 +74,32 @@ export interface AuthTokens {
 export interface AuthResponse {
   user: User;
   tokens: AuthTokens;
+}
+
+// AWS rekognition
+// Identity Pool ID
+
+export const AWS_REGION = "ap-south-1"
+export const Identity_Pool_Id = `${AWS_REGION}:5fa68ef7-5ba0-451d-8e61-b23e42480eba`;
+export const Allow_Guest_Access = true
+
+export interface LivenessResult {
+  SessionId: string;
+  Status: string;
+  Confidence?: number;
+  ReferenceImage?: {
+    BoundingBox?: any;
+    S3Object?: {
+      Bucket: string;
+      Name: string;
+    };
+    Bytes: string
+  };
+}
+
+export interface ComparisonResult {
+  isMatch: boolean;
+  confidence: number;
+  faceMatches: number;
+  threshold: number;
 }
