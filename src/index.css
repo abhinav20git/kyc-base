@@ -110,3 +110,38 @@ All colors MUST be RGB values to work with Tailwind's rgb() function.
     @apply bg-background text-foreground;
   }
 }
+
+.amplify-liveness-connecting-loader svg g circle[data-testid="circular-empty"],
+.amplify-liveness-connecting-loader svg g circle[data-testid="circular-filled"] {
+  display: none !important;
+  r: 0
+}
+.amplify-liveness-connecting-loader{
+    display: none !important;
+}
+.amplify-visually-hidden{
+  display: none;
+}
+[aria-live="assertive"]{
+  display: none;
+}
+.amplify-liveness-recording-icon{
+  display: none;
+}
+.amplify-button--primary{
+  background-color: #3b82f6;
+  padding: 6px 20px;
+  border-radius: 5px;
+  margin-top: 10px;
+  color: white;
+  font-weight: 600;
+}
+.amplify-loader g{
+  display: none;
+}
+.amplify-liveness-camera-module{
+  overflow: hidden;
+}
+.liveness-detector-check [style="justify-content: center;"]{
+  display: flex;
+}

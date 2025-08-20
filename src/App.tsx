@@ -8,12 +8,12 @@ import { KYCWorkflow } from "./pages/KYC Workflow/KYCWorkflow";
 import NotFound from "./pages/NotFound";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ProtectedRoute from "./components/ProtectedRoute"; 
+import ProtectedRoute from "./components/ProtectedRoute"; // import the wrapper
+
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { UserContextProvider } from "./context/UserContext";
-
-
+import { useToast } from "./hooks/use-toast";
 
 const queryClient = new QueryClient();
 
@@ -39,7 +39,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-              
+                {/* <Route path="/face-capture" element={<FaceCapture />} /> */}
                 {/* <Route path="*" element={<NotFound />} /> */}
               </Routes>
             </main>

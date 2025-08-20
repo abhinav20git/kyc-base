@@ -13,7 +13,7 @@ import { CameraCapture } from '../CameraCapture';
 import { uploadDocument } from '@/api/upload';
 import { ExtractedFields } from '../ExtractedFields';
 
-type Step = 'select' | 'upload' | 'extract' | 'capture' | 'complete';
+type Step = 'select' | 'upload' | 'extract' | 'face' | 'complete';
 
 export function KYCApp() {
   const [currentStep, setCurrentStep] = useState<Step>('select');
@@ -25,12 +25,14 @@ export function KYCApp() {
   const { toast } = useToast();
 
   const steps = [
-    { id: 'select', label: 'Select Document', completed: currentStep !== 'select' },
-    { id: 'upload', label: 'Upload Document', completed: ['extract', 'capture', 'complete'].includes(currentStep) },
-    { id: 'extract', label: 'Extract Data', completed: ['capture', 'complete'].includes(currentStep) },
-    { id: 'capture', label: 'Capture', completed: currentStep === 'complete' },
-    { id: 'complete', label: 'Complete', completed: false }
-  ];
+
+  { id: 'select', label: 'Select Document', completed: currentStep !== 'select' },
+  { id: 'upload', label: 'Upload Document', completed: ['extract', 'face', 'complete'].includes(currentStep) },
+  { id: 'extract', label: 'Extract Data', completed: ['face', 'complete'].includes(currentStep) },
+  { id: 'face', label: 'Face Detection', completed: currentStep === 'complete' },
+  { id: 'complete', label: 'Complete', completed: false }
+];
+
 
   const handleDocumentTypeSelect = (type: DocumentType) => {
     console.log(type)
@@ -79,7 +81,7 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
 };
 
   const handleExtractComplete = () => {
-    setCurrentStep('capture');
+    setCurrentStep('face');
     toast({
       title: "Data Extraction Complete!",
       description: "Moving to capture step for verification.",
@@ -95,31 +97,29 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
   };
 
   const handleBack = () => {
-    if (currentStep === 'upload') {
-      setCurrentStep('select');
-      setUploadedFile({file: null, type: null, preview: null});
-      setIsProcessing(false);
-      setIsSuccess(false);
-      setSelectedDocumentType(null);
-    } else if (currentStep === 'extract') {
-      setCurrentStep('upload');
-    } else if (currentStep === 'capture') {
-      setCurrentStep('extract');
-      setIsProcessing(false); 
-      setIsSuccess(false);
-    }
-  };
+  if (currentStep === 'upload') {
+    setCurrentStep('select');
+    setUploadedFile({file: null, type: null, preview: null});
+    setIsProcessing(false);
+    setIsSuccess(false);
+    setSelectedDocumentType(null);
+  } else if (currentStep === 'extract') {
+    setCurrentStep('upload');
+  } else if (currentStep === 'face') {
+    setCurrentStep('extract');
+  }
+};
 
   const getProgressValue = () => {
-    switch (currentStep) {
-      case 'select': return 20;
-      case 'upload': return 40;
-      case 'extract': return 60;
-      case 'capture': return 80;
-      case 'complete': return 100;
-      default: return 0;
-    }
-  };
+  switch (currentStep) {
+    case 'select': return 20;
+    case 'upload': return 40;
+    case 'extract': return 60;
+    case 'face': return 80;
+    case 'complete': return 100;
+    default: return 0;
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -143,27 +143,36 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-card-foreground">Verification Progress</h3>
               <Badge variant="outline" className="bg-primary/10">
-                Step {Math.min(steps.findIndex(s => s.id === currentStep) + 1, 5)} of 5
-              </Badge>
+  Step {steps.findIndex(s => s.id === currentStep) + 1} of {steps.length}
+</Badge>
             </div>
             
             <Progress value={getProgressValue()} className="mb-4" />
             
-            <div className="grid grid-cols-1 md:grid-cols-5 justify-between">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center space-x-2 border-b-2 md:border-b-0">
-                  <div className={`w-3 h-3 rounded-full ${
-                    step.completed ? 'bg-success' :
-                    step.id === currentStep ? 'bg-primary' : 'bg-gray-200'
-                  }`} />
-                  <span className={`text-sm ${
-                    step.id === currentStep ? 'text-foreground font-medium' : 'text-muted-foreground'
-                  }`}>
-                    {step.label}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <div className="flex items-center justify-between flex-nowrap space-x-4 overflow-x-auto">
+  {steps.map((step) => (
+    <div key={step.id} className="flex items-center space-x-2">
+      <div
+        className={`w-3 h-3 rounded-full ${
+          step.completed
+            ? 'bg-success'
+            : step.id === currentStep
+            ? 'bg-primary'
+            : 'bg-gray-200'
+        }`}
+      />
+      <span
+        className={`text-sm ${
+          step.id === currentStep
+            ? 'text-foreground font-medium'
+            : 'text-muted-foreground'
+        }`}
+      >
+        {step.label}
+      </span>
+    </div>
+  ))}
+</div>
           </div>
         </Card>
 
@@ -215,14 +224,9 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
               uploadedFile={uploadedFile || undefined}
             />
           )}
-
-          {currentStep === 'capture' && (
+          {currentStep === 'face' && (
             <CameraCapture
-              onCapture={(file, preview) => {
-                setUploadedFile({ file, type: selectedDocumentType, preview });
-                handleCaptureComplete();
-              }}
-              onCancel={() => setCurrentStep("extract")}
+              idPhoto={uploadedFile.file}
             />
           )}
 
