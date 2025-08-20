@@ -17,7 +17,11 @@ import {
   Globe,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -26,16 +30,23 @@ const queryClient = new QueryClient({
     },
   },
 });
+<<<<<<< HEAD
 
 export const KYCWorkflow: React.FC = () => {
   const navigate = useNavigate();
 
+=======
+ 
+export const KYCWorkflow: React.FC = () => {
+  const navigate = useNavigate();
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
   const steps = [
     { id: "upload", title: "Upload Document", icon: Upload },
     { id: "review", title: "Review & Edit", icon: Eye },
     { id: "complete", title: "Complete", icon: CheckCircle },
   ];
-
+ 
   const features = [
     {
       icon: Zap,
@@ -66,14 +77,14 @@ export const KYCWorkflow: React.FC = () => {
       color: "text-purple-500",
     },
   ];
-
+ 
   const stats = [
     { number: "1M+", label: "Documents Processed", icon: FileText },
     { number: "99.9%", label: "Accuracy Rate", icon: Award },
     { number: "<3s", label: "Processing Time", icon: Clock },
     { number: "24/7", label: "Support Available", icon: Users },
   ];
-
+ 
   const testimonials = [
     {
       name: "Rajesh Kumar",
@@ -97,7 +108,7 @@ export const KYCWorkflow: React.FC = () => {
       rating: 5,
     },
   ];
-
+ 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -125,7 +136,11 @@ export const KYCWorkflow: React.FC = () => {
                     complete KYC verification with unmatched speed and accuracy.
                   </p>
                 </div>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => navigate("/kyc-verification")}
@@ -139,7 +154,11 @@ export const KYCWorkflow: React.FC = () => {
                     <Eye className="w-5 h-5 ml-2" />
                   </button>
                 </div>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
                 {/* Trust Indicators */}
                 <div className="flex items-center space-x-6 pt-8 border-t border-gray-200">
                   <div className="flex items-center space-x-2">
@@ -158,7 +177,11 @@ export const KYCWorkflow: React.FC = () => {
                   </div>
                 </div>
               </div>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
               {/* Hero Visual */}
               <div className="relative">
                 <div className="relative bg-white rounded-2xl shadow-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-500">
@@ -200,7 +223,11 @@ export const KYCWorkflow: React.FC = () => {
             </div>
           </div>
         </section>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
         {/* Stats Section */}
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -216,6 +243,7 @@ export const KYCWorkflow: React.FC = () => {
                   <div className="text-gray-600 font-medium">{stat.label}</div>
                 </div>
               ))}
+<<<<<<< HEAD
             </div>
           </div>
         </section>
@@ -233,6 +261,25 @@ export const KYCWorkflow: React.FC = () => {
               </p>
             </div>
 
+=======
+            </div>
+          </div>
+        </section>
+ 
+        {/* Features Section */}
+        <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Why Choose Our KYC Platform?
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Experience the future of identity verification with our advanced
+                AI-powered platform
+              </p>
+            </div>
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {features.map((feature, index) => (
                 <div
@@ -255,7 +302,11 @@ export const KYCWorkflow: React.FC = () => {
             </div>
           </div>
         </section>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
         {/* How It Works */}
         <section className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -267,7 +318,11 @@ export const KYCWorkflow: React.FC = () => {
                 Get verified in minutes with our streamlined workflow
               </p>
             </div>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
             <div className="grid md:grid-cols-3 gap-8">
               {steps.map((step, index) => (
                 <div key={index} className="relative text-center group">
@@ -295,7 +350,11 @@ export const KYCWorkflow: React.FC = () => {
             </div>
           </div>
         </section>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
         {/* Testimonials */}
         <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -307,13 +366,22 @@ export const KYCWorkflow: React.FC = () => {
                 See what our customers say about their experience
               </p>
             </div>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
             <div className="grid md:grid-cols-3 gap-8">
               {testimonials.map((testimonial, index) => (
                 <div
                   key={index}
+<<<<<<< HEAD
                   className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 
                    transform transition-transform duration-300 
+=======
+                  className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20
+                   transform transition-transform duration-300
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
                    hover:-translate-y-3 hover:shadow-2xl cursor-pointer"
                 >
                   <div className="flex items-center mb-4">
@@ -340,7 +408,11 @@ export const KYCWorkflow: React.FC = () => {
             </div>
           </div>
         </section>
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 5288b9545ef1f459b082c82f7290e4a14fdca002
         {/* CTA Section */}
         <section className="py-20 bg-gray-900">
           <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
