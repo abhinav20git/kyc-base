@@ -20,7 +20,7 @@ export default function ChatbotWidget() {
     setTyping(true);
 
     try {
-      const res = await fetch("/api/chatbot", {
+      const res = await fetch("", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: input }),
