@@ -14,7 +14,7 @@ export default function ChatbotWidget() {
     setMessages([...messages, userMessage]);
 
     // Call backend API
-    const res = await fetch("/api/chatbot", {
+    const res = await fetch("", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: input }),
