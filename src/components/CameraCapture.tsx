@@ -3,7 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { FaceLivenessDetector } from "@aws-amplify/ui-react-liveness";
 import { Amplify } from "aws-amplify";
-import { Allow_Guest_Access, AWS_REGION, ComparisonResult, Identity_Pool_Id, LivenessResult } from "@/utils/constants";
+import { Allow_Guest_Access, API_BASE, AWS_REGION, ComparisonResult, Identity_Pool_Id, LivenessResult } from "@/utils/constants";
 import axios from "axios";
 import './new.css'
 
@@ -27,8 +27,7 @@ export function CameraCapture({ idPhoto }) {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const API_BASE = "https://j4t7l04g-5000.inc1.devtunnels.ms";
-
+  // const API_BASE = "https://j4t7l04g-5000.inc1.devtunnels.ms";
   useEffect(() => {
     const initAmplify = async () => {
       try {
@@ -42,7 +41,7 @@ export function CameraCapture({ idPhoto }) {
   }, []);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/hello`)
+    fetch(`${API_BASE}/`)
       .then((res) => res.json())
       .then((data) => setMessage(data.message))
       .catch(() => setMessage("❌ Backend connection failed"));
@@ -52,11 +51,21 @@ export function CameraCapture({ idPhoto }) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/start-liveness`, { method: "POST", headers: { 'Content-Type': 'application/json' }});
+      const res = await fetch(`${API_BASE}/users/start-liveness`, {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem("token")}`
+        },
+        credentials: "include"
+      });
+      console.log(res)
       const data = await res.json();
-      setSessionId(data.SessionId);
+      console.log(data.data.SessionId)
+      setSessionId(data.data.SessionId);
       setResult(null);
-    } catch {
+    } catch (e){
+      console.log(e)
       setError("Failed to start liveness session.");
     } finally {
       setIsLoading(false);
@@ -64,14 +73,24 @@ export function CameraCapture({ idPhoto }) {
   };
 
   const checkResult = async () => {
+    console.log("entered")
     if (!sessionId) return;
     setIsLoading(true);
+    console.log("entered loading")
     try {
-      const res = await fetch(`${API_BASE}/liveness-result/${sessionId}`);
+      const res = await fetch(`${API_BASE}/users/liveness-result/${sessionId}`, {
+        method: "GET",
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("token")}`,
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+      console.log(res);
       const data = await res.json();
-      
-      setResult(data);
-    } catch {
+      console.log("Check result server res - ", data.data)
+      setResult(data.data);
+    } catch (e){
+      console.log("entered loading 1", e)
       setError("Failed to fetch result.");
     } finally {
       setIsLoading(false);
@@ -93,17 +112,26 @@ export function CameraCapture({ idPhoto }) {
     setIsLoading(true);
     try {
       const formData = new FormData();
-      formData.append('idPhoto', idPhoto);
+      formData.append('image', idPhoto);
       if (result?.ReferenceImage?.S3Object) {
         formData.append('s3Bucket', result.ReferenceImage.S3Object.Bucket);
         formData.append('s3Key', result.ReferenceImage.S3Object.Name);
       } else {
         formData.append('livenessImageBytes', result.ReferenceImage.Bytes);
       }
-      const res = await axios.post(`${API_BASE}/compare-faces`, formData);
+      const res = await axios.post(
+        `${API_BASE}/users/compare-faces`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem("token")}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
       const data = res.data;
-      setComparisonResult(data);
-      console.log(data, "res")
+      setComparisonResult(data.data);
+      console.log(data.data, "res")
       toast({
         title: data.isMatch ? "✅ Match Found" : "❌ No Match",
         description: data.isMatch
