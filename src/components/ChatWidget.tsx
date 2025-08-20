@@ -1,28 +1,36 @@
 // ChatbotWidget.tsx
 import React, { useState } from "react";
 import ChatIcon from "../images/chat-bot-icon-design-robot-600nw-2476207303.jpg.webp";
+import { FiUpload } from "react-icons/fi";
 
 export default function ChatbotWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
   const [input, setInput] = useState("");
+  const [file, setFile] = useState<File | null>(null);
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !file) return;
 
-    const userMessage = { sender: "user", text: input };
+    const userMessage = { sender: "user", text: input || (file ? `📎 Uploaded file: ${file.name}` : "") };
     setMessages([...messages, userMessage]);
 
-    // Call backend API
+    // Build form data (for file upload + text)
+    const formData = new FormData();
+    formData.append("query", input);
+    if (file) {
+      formData.append("file", file);
+    }
+
     const res = await fetch("", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: input }),
+      body: formData, // no headers, fetch handles FormData
     });
     const data = await res.json();
 
     setMessages((prev) => [...prev, { sender: "bot", text: data.reply }]);
     setInput("");
+    setFile(null);
   };
 
   return (
@@ -67,8 +75,10 @@ export default function ChatbotWidget() {
             ))}
           </div>
 
-          {/* Input */}
-          <div className="flex p-2 border-t bg-white rounded-b-2xl">
+          {/* Input & File Upload */}
+          <div className="flex items-center gap-2 p-2 border-t bg-white rounded-b-2xl">
+            
+
             <input
               className="flex-1 border p-2 rounded-lg text-sm"
               value={input}
@@ -76,13 +86,29 @@ export default function ChatbotWidget() {
               placeholder="Ask me anything..."
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             />
+
             <button
               onClick={sendMessage}
-              className="ml-2 bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition"
+              className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition"
             >
               Send
             </button>
+            <label className="cursor-pointer bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-lg text-sm">
+              <FiUpload className="inline-block m-1" />
+              <input
+                type="file"
+                className="hidden"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
+            </label>
           </div>
+
+          {/* Show selected file name */}
+          {file && (
+            <div className="text-xs text-gray-600 px-3 pb-2">
+              Selected: <span className="font-medium">{file.name}</span>
+            </div>
+          )}
         </div>
       )}
 
