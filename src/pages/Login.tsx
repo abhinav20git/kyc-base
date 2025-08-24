@@ -22,49 +22,45 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    captcha: false,
   });
   const { toast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.captcha) {
-      toast({
-        title: "Verification Required",
-        description: "Please complete the reCAPTCHA verification.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const response = await loginUser({
-        email: formData.email,
-        password: formData.password,
-      });
+      window.grecaptcha.ready(() => {
+        window.grecaptcha.execute("6LfesK4rAAAAAOZr1v6wt1FkhccFw04_rh1Wmqku", { action: "submit" })
+          .then(async(token: string) => {
+            const response = await loginUser({
+              email: formData.email,
+              password: formData.password,
+              gretoken: token
+            });
 
-      if (response.success && response.data) {
-        localStorage.setItem("token", response.data.tokens.accessToken);
-        localStorage.setItem("refreshToken", response.data.tokens.refreshToken);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+            if (response.success && response.data) {
+              localStorage.setItem("token", response.data.tokens.accessToken);
+              localStorage.setItem("refreshToken", response.data.tokens.refreshToken);
+              localStorage.setItem("user", JSON.stringify(response.data.user));
 
-        
-        window.dispatchEvent(new Event("authStateChanged"));
 
-        toast({
-          title: "Login Successful",
-          description:
-            response.message ||
-            "Welcome back to your KYC verification dashboard.",
-        });
+              window.dispatchEvent(new Event("authStateChanged"));
 
-        navigate("/");
-      } else {
-        throw new Error(response.message || "Login failed");
-      }
+              toast({
+                title: "Login Successful",
+                description:
+                  response.message ||
+                  "Welcome back to your KYC verification dashboard.",
+              });
+
+              navigate("/");
+            } else {
+              throw new Error(response.message || "Login failed");
+            }
+          })
+      })
     } catch (error) {
       console.error("Login error:", error);
       toast({
@@ -198,29 +194,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* reCAPTCHA */}
-              <div className="border rounded-lg p-4 bg-muted/20">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="captcha"
-                    checked={formData.captcha}
-                    onCheckedChange={(checked) =>
-                      handleInputChange("captcha", checked)
-                    }
-                  />
-                  <Label htmlFor="captcha" className="text-sm">
-                    I'm not a robot
-                  </Label>
-                  <div className="ml-auto">
-                    <div className="w-8 h-8 bg-gradient-primary rounded flex items-center justify-center">
-                      <Shield className="w-4 h-4 text-white" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Protected by Cloudflare reCAPTCHA
-                </p>
-              </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
