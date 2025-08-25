@@ -205,6 +205,7 @@ const Login = () => {
                   </>
                 )}
               </Button>
+              
             </form>
 
             <div className="mt-6 text-center">
@@ -217,6 +218,11 @@ const Login = () => {
                   Create one here
                 </Link>
               </p>
+            </div>
+            <div className="text-xs mt-4 text-gray-400">
+              This site is protected by reCAPTCHA and the Google
+              <Link to="https://policies.google.com/privacy" className="text-blue-400"> Privacy Policy</Link> and
+              <Link to="https://policies.google.com/terms" className="text-blue-400"> Terms of Service </Link> apply.
             </div>
           </CardContent>
         </Card>
