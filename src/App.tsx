@@ -15,6 +15,7 @@ import Signup from "./pages/Signup";
 import { UserContextProvider } from "./context/UserContext";
 import Profile from "./components/Profile";
 import { useToast } from "./hooks/use-toast";
+import ComplianceDashboard from './components/ComplianceDashboard';
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/profile" element={<Profile/>} />
+                <Route path="/compliance" element={<ComplianceDashboard />} />
                 <Route
                   path="/kyc-verification"
                   element={

@@ -1,15 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { Edit } from "lucide-react";
+import axios from "axios";
+import { API_BASE } from "@/utils/constants";
 
 export default function ProfilePage() {
-  const [user] = useState({
-    name: "Akshat Giri",
-    email: "akshat@example.com",
-    mobile: "+91 9876543210",
-    status: "Verified",
-    profileImage: null, // if null show default icon
-  });
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const fetchUser = async () => {
+      try {
+        // Example API call – replace with your backend URL
+        const res = await axios.get(`${API_BASE}/users/profile` ,  {
+  headers: {
+    "ngrok-skip-browser-warning": "true",  "Authorization": `Bearer ${token}`
+  }, 
+});
+        console.log("API response:", res.data.data); // 👀 check the structure here
+        setUser(res.data.data);
+        
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p className="text-gray-600">Loading Profile...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p className="text-red-600">Failed to load profile</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-gray-50 via-blue-50 to-indigo-100 p-4 sm:p-6">
@@ -43,25 +78,17 @@ export default function ProfilePage() {
           </div>
           <div className="p-4 bg-gray-100 rounded-lg shadow hover:shadow-lg transition">
             <h3 className="font-semibold text-gray-700">Mobile</h3>
-            <p className="text-gray-600 break-words">{user.mobile}</p>
+            <p className="text-gray-600 break-words">+91 9876543210</p>
           </div>
         </div>
 
-        {/* Status */}
+        {/* Static KYC Status */}
         <div className="mt-8">
           <h3 className="font-semibold text-gray-700 mb-2">KYC Status</h3>
           <div className="w-full bg-gray-200 rounded-full h-3">
-            <div
-              className={`h-3 rounded-full ${
-                user.status === "Verified"
-                  ? "bg-green-500 w-full"
-                  : user.status === "Under Review"
-                  ? "bg-yellow-500 w-2/3"
-                  : "bg-gray-400 w-1/3"
-              }`}
-            ></div>
+            <div className="h-3 rounded-full bg-green-500 w-full"></div>
           </div>
-          <p className="mt-2 text-sm text-gray-600">{user.status}</p>
+          <p className="mt-2 text-sm text-gray-600">Verified</p>
         </div>
 
         {/* Info Cards */}
@@ -85,12 +112,12 @@ export default function ProfilePage() {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Mobile:</span>
-                <span className="break-words">{user.mobile}</span>
+                <span className="break-words">+91 9876543210</span>
               </div>
             </div>
           </div>
 
-          {/* Documents */}
+          {/* Static Documents */}
           <div className="rounded-xl overflow-hidden shadow-xl border border-gray-200 hover:shadow-2xl transition bg-gradient-to-br from-gray-50 to-gray-100">
             <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4">
               <h3 className="text-white font-semibold">Uploaded Documents</h3>

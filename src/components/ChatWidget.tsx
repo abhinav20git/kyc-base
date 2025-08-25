@@ -1,36 +1,69 @@
 // ChatbotWidget.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ChatIcon from "../images/chat-bot-icon-design-robot-600nw-2476207303.jpg.webp";
 import { FiUpload } from "react-icons/fi";
+import axios from "axios";
+import { API_BASE } from "@/utils/constants";
 
 export default function ChatbotWidget() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
+  const [messages, setMessages] = useState<{ sender: string; text: string }[]>(
+    []
+  );
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [initialized, setInitialized] = useState(false);
+
+  // initialize chat session
+  const initializeChat = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/chat/initialize`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+        },
+      });
+      console.log(res.data);
+      setInitialized(true);
+    } catch (err) {
+      console.error("Initialization failed:", err);
+    }
+  };
 
   const sendMessage = async () => {
     if (!input.trim() && !file) return;
 
-    const userMessage = { sender: "user", text: input || (file ? `📎 Uploaded file: ${file.name}` : "") };
-    setMessages([...messages, userMessage]);
+    const userMessage = {
+      sender: "user",
+      text: input || (file ? `📎 Uploaded file: ${file.name}` : ""),
+    };
+    setMessages((prev) => [...prev, userMessage]);
 
-    // Build form data (for file upload + text)
     const formData = new FormData();
-    formData.append("query", input);
+    formData.append("message", input);
     if (file) {
       formData.append("file", file);
     }
 
-    const res = await fetch("", {
-      method: "POST",
-      body: formData, // no headers, fetch handles FormData
-    });
-    const data = await res.json();
+    try {
+      if (initialized) {
+        const res = await axios.post(
+          `${API_BASE}/chat`,
+          formData,
+          {
+            headers: {
+              "ngrok-skip-browser-warning": "true",
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
 
-    setMessages((prev) => [...prev, { sender: "bot", text: data.reply }]);
-    setInput("");
-    setFile(null);
+        setMessages((prev) => [...prev, { sender: "bot", text: res.data.reply }]);
+        setInput("");
+        setFile(null);
+      }
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
   };
 
   return (
@@ -38,7 +71,10 @@ export default function ChatbotWidget() {
       {/* Floating chat icon */}
       <button
         className="fixed bottom-6 right-6 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform"
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          setOpen(!open);
+          initializeChat();
+        }}
       >
         <img src={ChatIcon} alt="Chat Icon" className="w-8 h-8" />
       </button>
@@ -52,7 +88,9 @@ export default function ChatbotWidget() {
           {/* Header */}
           <div className="p-3 border-b font-bold bg-blue-500 text-white rounded-t-2xl flex justify-between">
             <span>AI-KYC Assistant</span>
-            <button onClick={() => setOpen(false)} className="font-bold">×</button>
+            <button onClick={() => setOpen(false)} className="font-bold">
+              ×
+            </button>
           </div>
 
           {/* Messages */}
@@ -60,7 +98,9 @@ export default function ChatbotWidget() {
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  m.sender === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <p
                   className={`px-3 py-2 rounded-xl max-w-[75%] text-sm animate-fadeIn ${
@@ -77,8 +117,6 @@ export default function ChatbotWidget() {
 
           {/* Input & File Upload */}
           <div className="flex items-center gap-2 p-2 border-t bg-white rounded-b-2xl">
-            
-
             <input
               className="flex-1 border p-2 rounded-lg text-sm"
               value={input}
@@ -111,26 +149,6 @@ export default function ChatbotWidget() {
           )}
         </div>
       )}
-
-      {/* Animations */}
-      <style>
-        {`
-          @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-          }
-          .animate-slideUp {
-            animation: slideUp 0.3s ease-out;
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-          }
-          .animate-fadeIn {
-            animation: fadeIn 0.25s ease-in;
-          }
-        `}
-      </style>
     </div>
   );
 }
