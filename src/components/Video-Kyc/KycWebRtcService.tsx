@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,14 +20,14 @@ import {
   Wifi,
   WifiOff
 } from 'lucide-react';
-
-import AgentChecklist from './AgentCheckList';
 import WebRTCService from '@/lib/WebRtcService';
+import AgentChecklist from './AgentCheckList';
+
 
 
 const BACKEND_URL = 'https://kcx21158-3001.inc1.devtunnels.ms';
 
-// useAuth hook - no localStorage
+
 const useAuth = () => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -52,7 +51,7 @@ const useAuth = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
-      // For demo purposes, create mock user when backend is not available
+      
       const mockUser = { userId, role, name };
       const mockToken = 'mock-token-' + Date.now();
       setUser(mockUser);
@@ -135,12 +134,12 @@ const KYCWebRTCSystem = () => {
 
       webrtcService.current.on('onRemoteStream', (stream) => {
         if (remoteVideoRef.current) {
-          // Clear existing stream first
+          
           remoteVideoRef.current.srcObject = null;
           
           if (stream) {
             remoteVideoRef.current.srcObject = stream;
-            // Ensure video plays
+           
             remoteVideoRef.current.play().catch(console.error);
           }
         }
@@ -155,6 +154,7 @@ const KYCWebRTCSystem = () => {
       });
 
       webrtcService.current.on('onUserJoined', (joinedUser) => {
+        console.log(joinedUser)
         setRemoteUser(joinedUser);
       });
 
@@ -583,8 +583,9 @@ const KYCWebRTCSystem = () => {
                   <div className="flex items-center justify-between text-sm">
                     <span>Participant</span>
                     <Badge variant={remoteUser ? "default" : "secondary"}>
-                      {remoteUser ? 'Joined' : 'Waiting'}
-                    </Badge>
+                      {/* {remoteUser ? 'Joined' : 'Waiting'} */}
+
+{remoteUser.name}                    </Badge>
                   </div>
                 </CardContent>
               </Card>

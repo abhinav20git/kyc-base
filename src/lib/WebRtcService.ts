@@ -40,7 +40,7 @@ class WebRTCService {
       await this.getUserMedia();
       this.createPeerConnection();
       
-      // Join the session
+   
       this.socket.emit('join-session', {
         sessionId: room,
         user: this.user
@@ -108,13 +108,13 @@ class WebRTCService {
     this.callbacks.onConnectionStateChange?.('reconnecting');
 
     try {
-      // Clean up existing connection
+  
       if (this.peerConnection) {
         this.peerConnection.close();
         this.peerConnection = null;
       }
 
-      // Wait before reconnecting
+   
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Reinitialize
@@ -145,7 +145,7 @@ class WebRTCService {
       emit: (event, data) => {
         console.log('Mock socket emit:', event, data);
         
-        // Simulate responses for demo
+
         if (event === 'join-session'  || event === 'rejoin-session') {
           setTimeout(() => {
             this.simulateUserJoined();
@@ -216,96 +216,98 @@ class WebRTCService {
   }
 
   simulateRemoteStream() {
-    navigator.mediaDevices.getUserMedia({
-      video: { width: 320, height: 240 },
-      audio: true  
-    }).then(stream => {
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.play();
-      
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = 320;
-      canvas.height = 240;
-      
-      const drawFrame = () => {
-        ctx.save();
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-        ctx.restore();
-        requestAnimationFrame(drawFrame);
-      };
-      
-      video.onplaying = () => drawFrame();
-      
-      // Get video stream from canvas
-      const videoStream = canvas.captureStream(30);
-      
-      // Get audio tracks from original stream
-      const audioTracks = stream.getAudioTracks();
-      
-      // Combine video from canvas with audio from original stream
-      const mockStream = new MediaStream();
-      
-      // Add video track from canvas
-      videoStream.getVideoTracks().forEach(track => {
-        mockStream.addTrack(track);
-      });
-      
-      // Add audio tracks from original stream
-      audioTracks.forEach(track => {
-        mockStream.addTrack(track);
-      });
-      
-      this.remoteStream = mockStream;
-      this.callbacks.onRemoteStream?.(mockStream);
-    }).catch(console.error);
-  }
+  navigator.mediaDevices.getUserMedia({
+    video: { width: 320, height: 240 },
+    audio: true  
+  }).then(stream => {
+
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.play();
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 320;
+    canvas.height = 240;
+    
+    const drawFrame = () => {
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+      ctx.restore();
+      requestAnimationFrame(drawFrame);
+    };
+    
+    video.onplaying = () => drawFrame();
+    
+    // Get manipulated video stream
+    const videoStream = canvas.captureStream(30);
+    
+    // Create combined stream with original audio
+    const mockStream = new MediaStream();
+    
+    // Add manipulated video
+    videoStream.getVideoTracks().forEach(track => {
+      mockStream.addTrack(track);
+    });
+    
+    // Add original audio tracks (this preserves better audio quality)
+    stream.getAudioTracks().forEach(track => {
+      mockStream.addTrack(track);
+    });
+    
+    this.remoteStream = mockStream;
+    this.callbacks.onRemoteStream?.(mockStream);
+    
+    // Important: Don't stop the original stream immediately
+    // Keep it running for audio
+    
+  }).catch(console.error);
+}
+  
   
   setupSignalingHandlers() {
-    this.socket.on('user-joined', (data) => {
-      console.log('User joined:', data.user);
-      this.callbacks.onUserJoined?.(data.user);
-      
-      this.socket.on('user-rejoined', (data) => {
-        console.log('User rejoined:', data.user);
-        this.callbacks.onUserJoined?.(data.user);
-        
-        // Reset peer connection for rejoining user
-        if (this.peerConnection) {
-          this.peerConnection.close();
-          this.createPeerConnection();
-        }
-      });
-      
-      // if we're the initiator -agent then start webRTC negotiation
-      if (this.isInitiator) {
-        setTimeout(() => this.createOffer(), 1000);
-      }
-    });
+  this.socket.on('user-joined', (data) => {
+    console.log('User joined:', data.user);
+    this.callbacks.onUserJoined?.(data.user);
+    
+    // Start WebRTC negotiation if we're the initiator
+    if (this.isInitiator) {
+      setTimeout(() => this.createOffer(), 1000);
+    }
+  });
 
-    this.socket.on('user-left', (data) => {
-      console.log('User left:', data.userId);
-      this.callbacks.onUserLeft?.(data.userId);
-    });
+  // Move this outside - it was nested incorrectly
+  this.socket.on('user-rejoined', (data) => {
+    console.log('User rejoined:', data.user);
+    this.callbacks.onUserJoined?.(data.user);
+    
+    // Reset peer connection for rejoining user
+    if (this.peerConnection) {
+      this.peerConnection.close();
+      this.createPeerConnection();
+    }
+  });
 
-    this.socket.on('webrtc-signal', async (data) => {
-      console.log('Received WebRTC signal:', data.signal.type);
-      await this.handleSignalingMessage(data.signal);
-    });
+  this.socket.on('user-left', (data) => {
+    console.log('User left:', data.userId);
+    this.callbacks.onUserLeft?.(data.userId);
+  });
 
-    this.socket.on('recording-status-update', (data) => {
-      this.callbacks.onRecordingStatusUpdate?.(data);
-    });
+  this.socket.on('webrtc-signal', async (data) => {
+    console.log('Received WebRTC signal:', data.signal.type);
+    await this.handleSignalingMessage(data.signal);
+  });
 
-    this.socket.on('verification-completed', (data) => {
-      this.callbacks.onVerificationCompleted?.(data);
-    });
-  }
+  this.socket.on('recording-status-update', (data) => {
+    this.callbacks.onRecordingStatusUpdate?.(data);
+  });
 
-  // setting remote descriptions and adding ICE candidates.
-  async handleSignalingMessage(signal) {
+  this.socket.on('verification-completed', (data) => {
+    this.callbacks.onVerificationCompleted?.(data);
+  });
+}
+async handleSignalingMessage(signal) {
     try {
       if (!this.peerConnection) {
         console.warn('No peer connection available, recreating...');
@@ -367,133 +369,170 @@ class WebRTCService {
     }
   }
 
-  async getUserMedia() {
-    try {
-      // Stop existing stream if any
-      if (this.localStream) {
-        this.localStream.getTracks().forEach(track => track.stop());
-      }
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          frameRate: { ideal: 30 }
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 44100,  // Ensure good audio quality
-          channelCount: 1,    // Mono for better bandwidth
-        }
-      });
+  // async getUserMedia() {
+  //   try {
+  //     // Stop existing stream if any
+  //     if (this.localStream) {
+  //       this.localStream.getTracks().forEach(track => track.stop());
+  //     }
+  //     this.localStream = await navigator.mediaDevices.getUserMedia({
+  //       video: { 
+  //         width: { ideal: 1280 },
+  //         height: { ideal: 720 },
+  //         frameRate: { ideal: 30 }
+  //       },
+  //       audio: {
+  //         echoCancellation: true,
+  //         noiseSuppression: true,
+  //         autoGainControl: true,
+  //         sampleRate: 44100,  // Ensure good audio quality
+  //         channelCount: 1,    // Mono for better bandwidth
+  //       }
+  //     });
 
-      console.log('Local stream created with tracks:', 
-        this.localStream.getTracks().map(track => 
-          `${track.kind}: ${track.enabled}`
-        )
-      );
+  //     console.log('Local stream created with tracks:', 
+  //       this.localStream.getTracks().map(track => 
+  //         `${track.kind}: ${track.enabled}`
+  //       )
+  //     );
 
-      this.callbacks.onLocalStream?.(this.localStream);
-    } catch (error) {
-      console.error('Error accessing media devices:', error);
-      // Try with simpler constraints
-      try {
-        this.localStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true
-        });
+  //     this.callbacks.onLocalStream?.(this.localStream);
+  //   } catch (error) {
+  //     console.error('Error accessing media devices:', error);
+  //     // Try with simpler constraints
+  //     try {
+  //       this.localStream = await navigator.mediaDevices.getUserMedia({
+  //         video: true,
+  //         audio: true
+  //       });
         
-        console.log('Fallback stream created with tracks:', 
-          this.localStream.getTracks().map(track => 
-            `${track.kind}: ${track.enabled}`
-          )
-        );
+  //       console.log('Fallback stream created with tracks:', 
+  //         this.localStream.getTracks().map(track => 
+  //           `${track.kind}: ${track.enabled}`
+  //         )
+  //       );
         
-        this.callbacks.onLocalStream?.(this.localStream);
-      } catch (fallbackError) {
-        console.error('Fallback media access failed:', fallbackError);
-        throw fallbackError;
-      }
-    }
-  }
-
-  createPeerConnection() {
-    const config = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
-      ]
-    };
-
-    // Close existing connection if any
-    if (this.peerConnection) {
-      this.peerConnection.close();
-    }
-
-    this.peerConnection = new RTCPeerConnection(config);
-
-    // Add local stream tracks (both video AND audio)
+  //       this.callbacks.onLocalStream?.(this.localStream);
+  //     } catch (fallbackError) {
+  //       console.error('Fallback media access failed:', fallbackError);
+  //       throw fallbackError;
+  //     }
+  //   }
+  // }
+async getUserMedia() {
+  try {
     if (this.localStream) {
-      this.localStream.getTracks().forEach(track => {
-        console.log('Adding local track:', track.kind, track.enabled);
-        this.peerConnection.addTrack(track, this.localStream);
+      this.localStream.getTracks().forEach(track => track.stop());
+    }
+    this.localStream = await navigator.mediaDevices.getUserMedia({
+      video: { 
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 }
+      },
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        sampleRate: 44100,
+        channelCount: 2,    // Changed from 1 to 2 for stereo
+      }
+    });
+
+    console.log('Local stream created with tracks:', 
+      this.localStream.getTracks().map(track => 
+        `${track.kind}: ${track.enabled} (${track.readyState})`
+      )
+    );
+
+    this.callbacks.onLocalStream?.(this.localStream);
+  } catch (error) {
+    console.error('Error accessing media devices:', error);
+    // Try with simpler constraints
+    try {
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+      
+      console.log('Fallback stream created');
+      this.callbacks.onLocalStream?.(this.localStream);
+    } catch (fallbackError) {
+      console.error('Fallback media access failed:', fallbackError);
+      throw fallbackError;
+    }
+  }
+}
+  createPeerConnection() {
+  const config = {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' }
+    ]
+  };
+
+  if (this.peerConnection) {
+    this.peerConnection.close();
+  }
+
+  this.peerConnection = new RTCPeerConnection(config);
+
+
+  if (this.localStream) {
+    this.localStream.getTracks().forEach(track => {
+      console.log('Adding local track:', track.kind, track.enabled);
+      this.peerConnection.addTrack(track, this.localStream);
+    });
+  }
+
+  
+  this.peerConnection.ontrack = (event) => {
+    console.log('Received remote track:', event.track.kind, event.track.enabled);
+    
+    if (!this.remoteStream) {
+      this.remoteStream = new MediaStream();
+      this.callbacks.onRemoteStream?.(this.remoteStream);
+    }
+    
+
+    this.remoteStream.addTrack(event.track);
+    
+    this.callbacks.onRemoteStream?.(this.remoteStream);
+  };
+
+  // Rest of the method remains the same...
+  this.peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      this.sendSignalingMessage({
+        type: 'ice-candidate',
+        candidate: event.candidate
       });
     }
+  };
 
-    // Handle remote stream - ensure both video and audio
-    this.peerConnection.ontrack = (event) => {
-      console.log('Received remote track:', event.track.kind, event.track.enabled);
-      
-      if (!this.remoteStream) {
-        this.remoteStream = new MediaStream();
-      }
-      // Remove existing tracks of the same kind to avoid duplicates
-      this.remoteStream.getTracks()
-        .filter(track => track.kind === event.track.kind)
-        .forEach(track => this.remoteStream.removeTrack(track));
-      // Add the track to remote stream
-      this.remoteStream.addTrack(event.track);
-      
-      // Notify callback with updated stream
-      this.callbacks.onRemoteStream?.(this.remoteStream);
-    };
+  this.peerConnection.onconnectionstatechange = () => {
+    const state = this.peerConnection.connectionState;
+    console.log('Connection state changed:', state);
+    this.callbacks.onConnectionStateChange?.(state);
+  };
+
+  this.peerConnection.oniceconnectionstatechange = () => {
+    const state = this.peerConnection.iceConnectionState;
+    console.log('ICE connection state changed:', state);
     
-    // Handle ICE candidates
-    this.peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.sendSignalingMessage({
-          type: 'ice-candidate',
-          candidate: event.candidate
-        });
-      }
-    };
-
-    // Handle connection state changes
-    this.peerConnection.onconnectionstatechange = () => {
-      const state = this.peerConnection.connectionState;
-      console.log('Connection state changed:', state);
-      this.callbacks.onConnectionStateChange?.(state);
-    };
-
-    // Handle ICE connection state changes
-    this.peerConnection.oniceconnectionstatechange = () => {
-      const state = this.peerConnection.iceConnectionState;
-      console.log('ICE connection state changed:', state);
-      
-      if (state === 'connected' || state === 'completed') {
-        this.callbacks.onConnectionStateChange?.('connected');
-      } else if (state === 'failed' || state === 'disconnected') {
-        this.callbacks.onConnectionStateChange?.('failed');
-        setTimeout(() => {
-          if (this.peerConnection && this.peerConnection.connectionState === 'failed') {
-            this.restartIce();
-          }
-        }, 2000);
-      }
-    };
-  }
+    if (state === 'connected' || state === 'completed') {
+      this.callbacks.onConnectionStateChange?.('connected');
+    } else if (state === 'failed' || state === 'disconnected') {
+      this.callbacks.onConnectionStateChange?.('failed');
+      setTimeout(() => {
+        if (this.peerConnection && this.peerConnection.connectionState === 'failed') {
+          this.restartIce();
+        }
+      }, 2000);
+    }
+  };
+}
 
   async restartIce() {
     try {
