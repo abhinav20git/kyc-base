@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import WebRTCService from '@/lib/WebRtcService';
 import AgentChecklist from './AgentCheckList';
+import ChatWithAgentOrUser from './ChatWithAgentOrUser';
 
 
 
@@ -70,7 +71,7 @@ const useAuth = () => {
 
 const KYCWebRTCSystem = () => {
   const { user, token, login, logout } = useAuth();
-  const [role, setRole] = useState('customer');
+  const [role, setRole] = useState<'customer' | 'agent'>('customer');
   const [sessionId, setSessionId] = useState('demo-session-1');
   const [userName, setUserName] = useState('');
   const [connectionState, setConnectionState] = useState('disconnected');
@@ -78,6 +79,7 @@ const KYCWebRTCSystem = () => {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [isChatSessionStarted, setIsChatSessionStarted] = useState(false)
   const [verificationComplete, setVerificationComplete] = useState(false);
   const [checklistResults, setChecklistResults] = useState(null);
   const [remoteUser, setRemoteUser] = useState(null);
@@ -212,7 +214,7 @@ const KYCWebRTCSystem = () => {
     } catch (error) {
       console.error('Failed to start session:', error);
       // For demo, proceed anyway
-      setSessionStarted(true);
+      // setSessionStarted(true);
     }
   };
 
@@ -375,15 +377,11 @@ const KYCWebRTCSystem = () => {
     );
   }
 
-  if(!isVideoKYCStarted){
-    
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="bg-white shadow-sm border-b p-4">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center space-x-3">
+    <div className="min-h-screen bg-gradient-to-br ">
+      <div className=" py-4 px-2">
+        <div className="flex items-center justify-end md:px-20 mx-auto">
+          {/* <div className="flex items-center space-x-3">
             <Shield className="h-8 w-8 text-blue-600" />
             <div>
               <h1 className="text-xl font-bold text-gray-900">KYC Video Verification</h1>
@@ -391,7 +389,7 @@ const KYCWebRTCSystem = () => {
                 {user.name} ({user.role}) {sessionStarted && `- Session: ${sessionId}`}
               </p>
             </div>
-          </div>
+          </div> */}
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -414,14 +412,14 @@ const KYCWebRTCSystem = () => {
               </Badge>
             )}
             
-            <Button variant="ghost" onClick={logout} size="sm">
+            {/* <Button variant="ghost" onClick={logout} size="sm">
               Logout
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
 
-      {!sessionStarted ? (
+      {!isChatSessionStarted ? (
         <div className="max-w-md mx-auto mt-20 p-6">
           <Card>
             <CardHeader>
@@ -443,17 +441,18 @@ const KYCWebRTCSystem = () => {
               </div>
               
               <Button 
-                onClick={startSession} 
+                onClick={()=>{setIsChatSessionStarted(true)}} 
                 className="w-full"
                 disabled={!sessionId.trim()}
               >
-                <Video className="h-4 w-4 mr-2" />
+                {/* <Video className="h-4 w-4 mr-2" /> */}
                 {role === 'agent' ? 'Start Session' : 'Join Session'}
               </Button>
             </CardContent>
           </Card>
         </div>
-      ) : (
+      ) : isChatSessionStarted && !sessionStarted ? <ChatWithAgentOrUser socket={''} roomId={sessionId} userId={''} agentId={''} role={role} startKyc={startSession} />
+   : (
         <div className="max-w-7xl mx-auto p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
