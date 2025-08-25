@@ -82,6 +82,7 @@ const KYCWebRTCSystem = () => {
   const [checklistResults, setChecklistResults] = useState(null);
   const [remoteUser, setRemoteUser] = useState(null);
   const [isConnectedToServer, setIsConnectedToServer] = useState(false);
+  const [isVideoKYCStarted, setIsVideoKYCStarted] = useState(false)
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -374,6 +375,10 @@ const KYCWebRTCSystem = () => {
     );
   }
 
+  if(!isVideoKYCStarted){
+    
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="bg-white shadow-sm border-b p-4">
@@ -584,8 +589,7 @@ const KYCWebRTCSystem = () => {
                     <span>Participant</span>
                     <Badge variant={remoteUser ? "default" : "secondary"}>
                       {/* {remoteUser ? 'Joined' : 'Waiting'} */}
-
-{remoteUser.name}                    </Badge>
+                   </Badge>
                   </div>
                 </CardContent>
               </Card>
