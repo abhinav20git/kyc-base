@@ -250,8 +250,7 @@ class WebRTCService {
     videoStream.getVideoTracks().forEach(track => {
       mockStream.addTrack(track);
     });
-    
-    // Add original audio tracks (this preserves better audio quality)
+ 
     stream.getAudioTracks().forEach(track => {
       mockStream.addTrack(track);
     });
@@ -259,8 +258,7 @@ class WebRTCService {
     this.remoteStream = mockStream;
     this.callbacks.onRemoteStream?.(mockStream);
     
-    // Important: Don't stop the original stream immediately
-    // Keep it running for audio
+    
     
   }).catch(console.error);
 }
@@ -277,12 +275,12 @@ class WebRTCService {
     }
   });
 
-  // Move this outside - it was nested incorrectly
+  
   this.socket.on('user-rejoined', (data) => {
     console.log('User rejoined:', data.user);
     this.callbacks.onUserJoined?.(data.user);
     
-    // Reset peer connection for rejoining user
+  
     if (this.peerConnection) {
       this.peerConnection.close();
       this.createPeerConnection();
@@ -369,56 +367,6 @@ async handleSignalingMessage(signal) {
     }
   }
 
-  // async getUserMedia() {
-  //   try {
-  //     // Stop existing stream if any
-  //     if (this.localStream) {
-  //       this.localStream.getTracks().forEach(track => track.stop());
-  //     }
-  //     this.localStream = await navigator.mediaDevices.getUserMedia({
-  //       video: { 
-  //         width: { ideal: 1280 },
-  //         height: { ideal: 720 },
-  //         frameRate: { ideal: 30 }
-  //       },
-  //       audio: {
-  //         echoCancellation: true,
-  //         noiseSuppression: true,
-  //         autoGainControl: true,
-  //         sampleRate: 44100,  // Ensure good audio quality
-  //         channelCount: 1,    // Mono for better bandwidth
-  //       }
-  //     });
-
-  //     console.log('Local stream created with tracks:', 
-  //       this.localStream.getTracks().map(track => 
-  //         `${track.kind}: ${track.enabled}`
-  //       )
-  //     );
-
-  //     this.callbacks.onLocalStream?.(this.localStream);
-  //   } catch (error) {
-  //     console.error('Error accessing media devices:', error);
-  //     // Try with simpler constraints
-  //     try {
-  //       this.localStream = await navigator.mediaDevices.getUserMedia({
-  //         video: true,
-  //         audio: true
-  //       });
-        
-  //       console.log('Fallback stream created with tracks:', 
-  //         this.localStream.getTracks().map(track => 
-  //           `${track.kind}: ${track.enabled}`
-  //         )
-  //       );
-        
-  //       this.callbacks.onLocalStream?.(this.localStream);
-  //     } catch (fallbackError) {
-  //       console.error('Fallback media access failed:', fallbackError);
-  //       throw fallbackError;
-  //     }
-  //   }
-  // }
 async getUserMedia() {
   try {
     if (this.localStream) {
@@ -435,7 +383,7 @@ async getUserMedia() {
         noiseSuppression: true,
         autoGainControl: true,
         sampleRate: 44100,
-        channelCount: 2,    // Changed from 1 to 2 for stereo
+        channelCount: 2,    
       }
     });
 

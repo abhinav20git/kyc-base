@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,11 +21,9 @@ import {
 } from 'lucide-react';
 import WebRTCService from '@/lib/WebRtcService';
 import AgentChecklist from './AgentCheckList';
-
-
+import ConsentFormModal from './ConsentForm';
 
 const BACKEND_URL = 'https://kcx21158-3001.inc1.devtunnels.ms';
-
 
 const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -41,7 +38,7 @@ const useAuth = () => {
       });
       
       const data = await response.json();
-      
+      console.log(data.user?.name);
       if (response.ok) {
         setToken(data.token);
         setUser(data.user);
@@ -89,6 +86,11 @@ const KYCWebRTCSystem = () => {
   const mediaRecorderRef = useRef(null);
   const recordedChunks = useRef([]);
 
+
+  const [showConsentForm, setShowConsentForm] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
+  const [metadata, setMetadata] = useState(null);
+
   const checkAudioTracks = () => {
     const localVideo = localVideoRef.current;
     const remoteVideo = remoteVideoRef.current;
@@ -122,6 +124,31 @@ const KYCWebRTCSystem = () => {
     };
   }, [sessionStarted, user]);
 
+  useEffect(() => {
+    if (!user) {
+      
+      setShowConsentForm(false);
+      setConsentGiven(false);
+      setMetadata(null);
+      setSessionStarted(false);
+      setVerificationComplete(false);
+      setChecklistResults(null);
+      setRemoteUser(null);
+      setConnectionState('disconnected');
+      setIsConnectedToServer(false);
+      
+     
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = null;
+      }
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = null;
+      }
+    
+      webrtcService.current.disconnect();
+    }
+  }, [user]);
+
   const initializeWebRTC = async () => {
     try {
       setConnectionState('connecting');
@@ -134,12 +161,10 @@ const KYCWebRTCSystem = () => {
 
       webrtcService.current.on('onRemoteStream', (stream) => {
         if (remoteVideoRef.current) {
-          
           remoteVideoRef.current.srcObject = null;
           
           if (stream) {
             remoteVideoRef.current.srcObject = stream;
-           
             remoteVideoRef.current.play().catch(console.error);
           }
         }
@@ -187,10 +212,49 @@ const KYCWebRTCSystem = () => {
     try {
       const userId = `${role}-${Date.now()}`;
       await login(userId, role, userName);
+     
+      setTimeout(() => {
+        setShowConsentForm(true);
+      }, 100); 
     } catch (error) {
       console.error('Login failed:', error);
     }
   };
+
+  
+  const handleLogout = () => {
+
+    if (sessionStarted) {
+      endSession();
+    }
+    
+   
+    setShowConsentForm(false);
+    setConsentGiven(false);
+    setMetadata(null);
+    
+    
+    setUserName('');
+    setRole('customer');
+    setSessionId('demo-session-1');
+    
+    logout();
+  };
+
+  async function fetchGeoLocation() {
+    if (navigator.geolocation) {
+      return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+          () => resolve(null),
+          { timeout: 5000 }
+        );
+      });
+    }
+    return null;
+  }
+
+ 
 
   const startSession = async () => {
     if (!sessionId.trim()) return;
@@ -205,12 +269,11 @@ const KYCWebRTCSystem = () => {
         body: JSON.stringify({ sessionId })
       });
       
-      if (response.ok || true) { // Allow demo to proceed even if backend unavailable
+      if (response.ok || true) {
         setSessionStarted(true);
       }
     } catch (error) {
       console.error('Failed to start session:', error);
-      // For demo, proceed anyway
       setSessionStarted(true);
     }
   };
@@ -225,7 +288,7 @@ const KYCWebRTCSystem = () => {
     setRemoteUser(null);
     setVerificationComplete(false);
     setIsConnectedToServer(false);
-    // Clear video elements
+
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = null;
     }
@@ -248,7 +311,7 @@ const KYCWebRTCSystem = () => {
 
   const startRecording = async () => {
     try {
-      const stream = localVideoRef.current?.srcObject;
+      const stream = remoteVideoRef.current?.srcObject;
       if (stream) {
         mediaRecorderRef.current = new MediaRecorder(stream, {
           mimeType: 'video/webm;codecs=vp9'
@@ -319,6 +382,20 @@ const KYCWebRTCSystem = () => {
     }
   };
 
+  
+  const handleConsentAccept = async () => {
+    const geo = await fetchGeoLocation();
+  
+    const time = new Date().toLocaleString();
+    const metadataObj = { geo, time, consent: true };
+    
+    setMetadata(metadataObj);
+    setConsentGiven(true);
+    setShowConsentForm(false);
+    
+  };
+
+ 
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
@@ -376,6 +453,19 @@ const KYCWebRTCSystem = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      
+      {user && showConsentForm && (
+        <ConsentFormModal
+          open={showConsentForm}
+          onOpenChange={setShowConsentForm}
+          userName={userName}
+          role={role}
+          sessionId={sessionId}
+          onConsent={handleConsentAccept}
+          
+        />
+      )}
+
       <div className="bg-white shadow-sm border-b p-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center space-x-3">
@@ -409,7 +499,7 @@ const KYCWebRTCSystem = () => {
               </Badge>
             )}
             
-            <Button variant="ghost" onClick={logout} size="sm">
+            <Button variant="ghost" onClick={handleLogout} size="sm">
               Logout
             </Button>
           </div>
@@ -435,16 +525,25 @@ const KYCWebRTCSystem = () => {
               <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
                 <p><strong>Role:</strong> {user.role}</p>
                 <p><strong>Name:</strong> {user.name}</p>
+                {consentGiven && (
+                  <p className="text-green-600 mt-2">✓ Consent provided</p>
+                )}
               </div>
               
               <Button 
                 onClick={startSession} 
                 className="w-full"
-                disabled={!sessionId.trim()}
+                disabled={!sessionId.trim() || !consentGiven}
               >
                 <Video className="h-4 w-4 mr-2" />
                 {role === 'agent' ? 'Start Session' : 'Join Session'}
               </Button>
+              
+              {!consentGiven && (
+                <p className="text-sm text-amber-600 text-center">
+                  Please provide consent to continue
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -563,32 +662,47 @@ const KYCWebRTCSystem = () => {
             </div>
 
             <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Connection Status</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Server</span>
-                    <Badge variant={isConnectedToServer ? "default" : "destructive"}>
-                      {isConnectedToServer ? 'Connected' : 'Disconnected'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Peer Connection</span>
-                    <Badge variant={connectionState === 'connected' ? "default" : "secondary"}>
-                      {connectionState}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Participant</span>
-                    <Badge variant={remoteUser ? "default" : "secondary"}>
-                      {/* {remoteUser ? 'Joined' : 'Waiting'} */}
+               {consentGiven && metadata && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Consent Metadata</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p><strong>Timestamp:</strong> {metadata.time}</p>
+                    <p><strong>IP Address:</strong> {metadata.ip}</p>
+                    <p><strong>Location:</strong> {metadata.geo ? `Lat: ${metadata.geo.lat}, Lon: ${metadata.geo.lon}` : 'Unavailable'}</p>
+                    <p><strong>Consent:</strong> {metadata.consent ? 'Yes' : 'No'}</p>
+                  </CardContent>
+                </Card>
+              )}
 
-{remoteUser.name}                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
+              {role === 'agent' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Connection Status</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Server</span>
+                      <Badge variant={isConnectedToServer ? "default" : "destructive"}>
+                        {isConnectedToServer ? 'Connected' : 'Disconnected'}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Peer Connection</span>
+                      <Badge variant={connectionState === 'connected' ? "default" : "secondary"}>
+                        {connectionState}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Participant</span>
+                      <Badge variant={remoteUser ? "default" : "secondary"}>
+                        {remoteUser ? 'Joined' : 'Waiting'}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {role === 'agent' && !verificationComplete && (
                 <AgentChecklist
