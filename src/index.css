@@ -149,3 +149,5 @@ All colors MUST be RGB values to work with Tailwind's rgb() function.
 [class="rc-anchor-content"], [class="rc-anchor-center-item rc-anchor-error-message"]{
   display: none !important;
 }
+
+.grecaptcha-badge { visibility: hidden; }

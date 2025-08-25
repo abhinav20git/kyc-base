@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute"; // import the wrapper
+import Agent_KYC from "./pages/Agent_KYC.js"
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -43,6 +44,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/video-kyc" element={<Agent_KYC/>}/>
                 {/* <Route path="/face-capture" element={<FaceCapture />} /> */}
                 {/* <Route path="*" element={<NotFound />} /> */}
               </Routes>
