@@ -16,10 +16,13 @@ export default function ChatbotWidget() {
 
   // initialize chat session
   const initializeChat = async () => {
+    const token = localStorage.getItem("token");
     try {
-      const res = await axios.get(`${API_BASE}/chat/initialize`, {
+      const res = await axios.get(`${API_BASE}/AI/chat/initialize`, {
         headers: {
           "ngrok-skip-browser-warning": "true",
+          Authorization: `Bearer ${token}`,
+          
         },
       });
       console.log(res.data);
@@ -30,41 +33,49 @@ export default function ChatbotWidget() {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() && !file) return;
+  if (!input.trim() && !file) return;
 
-    const userMessage = {
-      sender: "user",
-      text: input || (file ? `📎 Uploaded file: ${file.name}` : ""),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    const formData = new FormData();
-    formData.append("message", input);
-    if (file) {
-      formData.append("file", file);
-    }
-
-    try {
-      if (initialized) {
-        const res = await axios.post(
-          `${API_BASE}/chat`,
-          formData,
-          {
-            headers: {
-              "ngrok-skip-browser-warning": "true",
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
-        setMessages((prev) => [...prev, { sender: "bot", text: res.data.reply }]);
-        setInput("");
-        setFile(null);
-      }
-    } catch (err) {
-      console.error("Error sending message:", err);
-    }
+  const userMessage = {
+    sender: "user",
+    text: input || (file ? `📎 Uploaded file: ${file.name}` : ""),
   };
+  setMessages((prev) => [...prev, userMessage]);
+
+  const formData = new FormData();
+  formData.append("payload", JSON.stringify({ message: input })); // 👈 still sending payload
+  // formData.append("message", input);
+  if (file) {
+    formData.append("file", file);
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    if (initialized) {
+      const res = await axios.post(
+        `${API_BASE}/AI/chat`, {
+          payload : {
+            message : input
+          },
+        },
+        
+        {
+          headers: {
+            "ngrok-skip-browser-warning": "true",
+            "Authorization": `Bearer ${token}`,
+            // ❌ do not set Content-Type manually, axios will set proper boundary
+          },
+        }
+      );
+      console.log(res.data.message);
+
+      setMessages((prev) => [...prev, { sender: "bot", text: res.data.data.data.message }]);
+      setInput("");
+      setFile(null);
+    }
+  } catch (err) {
+    console.error("Error sending message:", err);
+  }
+};
 
   return (
     <div>
