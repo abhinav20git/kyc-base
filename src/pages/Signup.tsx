@@ -19,21 +19,11 @@ const Signup = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    captcha: false
   });
   const { toast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.captcha) {
-      toast({
-        title: "Verification Required",
-        description: "Please complete the reCAPTCHA verification.",
-        variant: "destructive"
-      });
-      return;
-    }
 
     if (formData.password !== formData.confirmPassword) {
       toast({
@@ -62,42 +52,50 @@ const Signup = () => {
         password: "***hidden***"
       });
 
-      const response = await registerUser({ 
-        name: formData.fullName, 
-        email: formData.email, 
-        password: formData.password 
-      });
+      window.grecaptcha.ready(async () => {
+        window.grecaptcha.execute("6LfesK4rAAAAAOZr1v6wt1FkhccFw04_rh1Wmqku", { action: 'submit' }).then(async(token: string) => {
+          const response = await registerUser({
+            name: formData.fullName,
+            email: formData.email,
+            password: formData.password,
+            gretoken: token
+          });
 
-      console.log("Registration response:", response);
+          console.log("Registration response:", response);
 
-      if (response.success && response.data) {
-        // Store tokens if provided in registration response
-        if (response.data.tokens) {
-          localStorage.setItem("token", response.data.tokens.accessToken);
-          localStorage.setItem("refreshToken", response.data.tokens.refreshToken);
-          
-          // Store user data
-          localStorage.setItem("user", JSON.stringify(response.data.user));
-        }
+          if (response.success && response.data) {
+            // Store tokens if provided in registration response
+            if (response.data.tokens) {
+              localStorage.setItem("token", response.data.tokens.accessToken);
+              localStorage.setItem("refreshToken", response.data.tokens.refreshToken);
 
-        // Dispatch event to notify other components of auth state change
-        window.dispatchEvent(new Event('authStateChanged'));
+              // Store user data
+              localStorage.setItem("user", JSON.stringify(response.data.user));
+            }
 
-        toast({
-          title: "Account Created Successfully",
-          description: response.message || "Welcome! Your KYC verification account has been created.",
-        });
+            // Dispatch event to notify other components of auth state change
+            window.dispatchEvent(new Event('authStateChanged'));
 
-        // Redirect to login page or dashboard based on whether tokens were provided
-        if (response.data.tokens) {
-          navigate("/"); // Go to dashboard if logged in
-        } else {
-          navigate("/login"); // Go to login if registration only
-        }
-      } else {
-        console.error("Registration failed - invalid response:", response);
-        throw new Error(response.message || "Registration failed");
-      }
+            toast({
+              title: "Account Created Successfully",
+              description: response.message || "Welcome! Your KYC verification account has been created.",
+            });
+
+            // Redirect to login page or dashboard based on whether tokens were provided
+            if (response.data.tokens) {
+              navigate("/"); // Go to dashboard if logged in
+            } else {
+              navigate("/login"); // Go to login if registration only
+            }
+          } else {
+            console.error("Registration failed - invalid response:", response);
+            throw new Error(response.message || "Registration failed");
+          }
+        })
+
+      })
+
+
     } catch (error) {
       console.error("Registration error details:", {
         message: error.message,
@@ -105,9 +103,9 @@ const Signup = () => {
         status: error.response?.status,
         fullError: error
       });
-      
+
       let errorMessage = "Please try again after some time.";
-      
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
@@ -227,28 +225,6 @@ const Signup = () => {
                 </div>
               </div>
 
-              {/* reCAPTCHA */}
-              <div className="border rounded-lg p-4 bg-muted/20">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="captcha"
-                    checked={formData.captcha}
-                    onCheckedChange={(checked) => handleInputChange('captcha', checked)}
-                  />
-                  <Label htmlFor="captcha" className="text-sm">
-                    I'm not a robot
-                  </Label>
-                  <div className="ml-auto">
-                    <div className="w-8 h-8 bg-gradient-primary rounded flex items-center justify-center">
-                      <Shield className="w-4 h-4 text-white" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Protected by Cloudflare reCAPTCHA
-                </p>
-              </div>
-
               <Button
                 type="submit"
                 variant="default"
@@ -273,6 +249,11 @@ const Signup = () => {
                   Sign in here
                 </Link>
               </p>
+            </div>
+            <div className="text-xs mt-4 text-gray-400">
+              This site is protected by reCAPTCHA and the Google
+              <Link to="https://policies.google.com/privacy" className="text-blue-400"> Privacy Policy</Link> and
+              <Link to="https://policies.google.com/terms" className="text-blue-400"> Terms of Service </Link> apply.
             </div>
           </CardContent>
         </Card>

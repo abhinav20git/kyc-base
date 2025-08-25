@@ -2,20 +2,26 @@ import { AUTH_REGISTER, AUTH_LOGIN, AUTH_LOGOUT, AUTH_REFRESH_TOKEN } from "@/ut
 
 import apiClient from "../utils/axios" 
 
-export const registerUser = async ({ name, email, password }) => {
+export const registerUser = async ({ name, email, password, gretoken }) => {
     try {
         if (!name || !email || !password) {
             throw new Error('All fields are required')
         }
+
         
         if (!name.trim() || !email.trim() || !password.trim()) {
             throw new Error('All fields must contain valid data')
+        }
+        
+        if(!gretoken || !gretoken.trim()){
+            throw new Error('Captcha Required')
         }
 
         const response = await apiClient.post(AUTH_REGISTER, {
             name: name.trim(), 
             email: email.trim(), 
-            password
+            password,
+            gretoken
         });
 
         console.log("Registration API response:", response.data);
@@ -43,13 +49,16 @@ export const registerUser = async ({ name, email, password }) => {
     }
 }
 
-export const loginUser = async ({ email, password }) => {
+export const loginUser = async ({ email, password, gretoken }) => {
     try {
         if (!email.trim() || !password.trim()) {
             throw new Error('All fields are required')
         }
+        if(!gretoken || !gretoken.trim()){
+            throw new Error('Captcha Required')
+        }
         const response = await apiClient.post(AUTH_LOGIN, {
-            email, password
+            email, password, gretoken
         })
         return response.data;
     } catch (error) {
