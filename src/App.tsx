@@ -9,7 +9,7 @@ import NotFound from "./pages/NotFound";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute"; // import the wrapper
-import Agent_KYC from "./pages/Agent_KYC.js"
+// import Agent_KYC from "./pages/Agent_KYC.js"
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -35,16 +35,23 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/profile" element={<Profile/>} />
-                <Route path="/compliance" element={<ComplianceDashboard />} />
+                <Route path="/compliance"
+
+                 element= {<ProtectedRoute>
+                  <ComplianceDashboard />
+                 </ProtectedRoute>}
+                 />
                 <Route
                   path="/kyc-verification"
+                  
                   element={
                     <ProtectedRoute>
                       <KycVerification />
+                     
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/video-kyc" element={<Agent_KYC/>}/>
+                {/* <Route path="/video-kyc" element={<Agent_KYC/>}/> */}
                 {/* <Route path="/face-capture" element={<FaceCapture />} /> */}
                 {/* <Route path="*" element={<NotFound />} /> */}
               </Routes>

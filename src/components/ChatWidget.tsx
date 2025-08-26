@@ -1,4 +1,3 @@
-// ChatbotWidget.tsx
 import React, { useEffect, useState } from "react";
 import ChatIcon from "../images/chat-bot-icon-design-robot-600nw-2476207303.jpg.webp";
 import { FiUpload } from "react-icons/fi";
@@ -18,60 +17,70 @@ export default function ChatbotWidget() {
   const initializeChat = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await axios.get(`${API_BASE}/AI/chat/initialize`, {
+      const res = await axios.get(`${API_BASE}/c/initialize`, {
         headers: {
           "ngrok-skip-browser-warning": "true",
           Authorization: `Bearer ${token}`,
           
         },
       });
-      console.log(res.data);
+      console.log("initialize data",res.data);
       setInitialized(true);
     } catch (err) {
       console.error("Initialization failed:", err);
     }
   };
+  
 
-  const sendMessage = async () => {
-  if (!input.trim() && !file) return;
+const sendMessage = async () => {
+  if (!input.trim()) return;
 
-  const userMessage = {
-    sender: "user",
-    text: input || (file ? `📎 Uploaded file: ${file.name}` : ""),
-  };
+  const userMessage = { sender: "user", text: input };
   setMessages((prev) => [...prev, userMessage]);
-
-  const formData = new FormData();
-  formData.append("payload", JSON.stringify({ message: input })); // 👈 still sending payload
-  // formData.append("message", input);
-  if (file) {
-    formData.append("file", file);
-  }
 
   try {
     const token = localStorage.getItem("token");
-    if (initialized) {
-      const res = await axios.post(
-        `${API_BASE}/AI/chat`, {
-          payload : {
-            message : input
-          },
-        },
-        
-        {
-          headers: {
-            "ngrok-skip-browser-warning": "true",
-            "Authorization": `Bearer ${token}`,
-            // ❌ do not set Content-Type manually, axios will set proper boundary
-          },
-        }
-      );
-      console.log(res.data.message);
 
-      setMessages((prev) => [...prev, { sender: "bot", text: res.data.data.data.message }]);
-      setInput("");
-      setFile(null);
-    }
+    const res = await axios.post(
+      `${API_BASE}/c/message`,
+      { message: input }, // ✅ send JSON body
+      {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json", // ✅ explicitly JSON
+        },
+      }
+    );
+    console.log("Message response:", res.data);
+
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: res.data.data?.response || "No reply" },
+    ]);
+    setInput("");
+  } catch (err) {
+    console.error("Error sending message:", err);
+  }
+};
+const getMessage = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get(
+      `${API_BASE}/c/history`,
+       // ✅ empty body
+      {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Message response history:", res.data);
+
   } catch (err) {
     console.error("Error sending message:", err);
   }
@@ -142,6 +151,7 @@ export default function ChatbotWidget() {
             >
               Send
             </button>
+            {/* <button className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition" onClick={getMessage}  >History</button> */}
             <label className="cursor-pointer bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-lg text-sm">
               <FiUpload className="inline-block m-1" />
               <input

@@ -1,234 +1,486 @@
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, XCircle, Clock, Search, Download, Filter } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Search,
+  Download,
+  Filter,
+  Bot,
+  Brain,
+  Zap,
+  TrendingUp,
+  Activity,
+} from "lucide-react";
 
-// TypeScript interfaces
-interface ComplianceUser {
+// TypeScript interfaces for AI-driven compliance
+interface AIComplianceUser {
   id: string;
   name: string;
   email: string;
   riskScore: number;
-  amlStatus: 'clear' | 'flagged' | 'pending';
-  pepStatus: 'clear' | 'flagged' | 'pending';
-  sanctionsStatus: 'clear' | 'flagged' | 'pending';
+  amlStatus: "clear" | "flagged" | "pending";
+  pepStatus: "clear" | "flagged" | "pending";
+  sanctionsStatus: "clear" | "flagged" | "pending";
   lastScreened: string;
+  aiDecision:
+    | "auto_approved"
+    | "auto_rejected"
+    | "requires_human_review"
+    | "pending_screening";
+  aiConfidence: number; // AI confidence in decision (0-100)
+  automationReason: string;
+  processingTime: number; // milliseconds
   alerts: number;
-  status: 'approved' | 'under_review' | 'rejected' | 'pending';
+  riskFactors: string[];
+}
+
+interface AISystemMetrics {
+  totalProcessed: number;
+  autoApproved: number;
+  autoRejected: number;
+  humanReviewRequired: number;
+  averageProcessingTime: number; // seconds
+  aiAccuracy: number; // percentage
+  systemUptime: number; // percentage
+}
+interface AuditLog {
+  id: string;
+  timestamp: string;
+  action: string;
+  actor: string;
+  result: string;
 }
 
 interface ComplianceFilters {
-  riskLevel: 'all' | 'high' | 'medium' | 'low';
-  status: 'all' | 'approved' | 'under_review' | 'rejected' | 'pending';
-  dateRange: '7days' | '30days' | '90days';
+  aiDecision: "all" | AIComplianceUser["aiDecision"];
+  riskLevel: "all" | "high" | "medium" | "low";
+  confidence: "all" | "high" | "medium" | "low";
+  dateRange: "7days" | "30days" | "90days";
 }
 
-interface ComplianceMetricsData {
-  clearUsers: number;
-  underReview: number;
-  flagged: number;
-  pendingScreening: number;
-}
-
-// Mock data with proper TypeScript typing
-const mockUsers: ComplianceUser[] = [
+// Mock data with AI automation focus
+const mockUsers: AIComplianceUser[] = [
   {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    riskScore: 85,
-    amlStatus: 'clear',
-    pepStatus: 'flagged',
-    sanctionsStatus: 'clear',
-    lastScreened: '2024-08-22T10:30:00Z',
-    alerts: 1,
-    status: 'under_review'
-  },
-  {
-    id: '2', 
-    name: 'Jane Smith',
-    email: 'jane@example.com',
+    id: "1",
+    name: "John Doe",
+    email: "john@example.com",
     riskScore: 25,
-    amlStatus: 'clear',
-    pepStatus: 'clear',
-    sanctionsStatus: 'clear',
-    lastScreened: '2024-08-22T09:15:00Z',
+    amlStatus: "clear",
+    pepStatus: "clear",
+    sanctionsStatus: "clear",
+    lastScreened: "2024-08-22T10:30:00Z",
+    aiDecision: "auto_approved",
+    aiConfidence: 94,
+    automationReason:
+      "Low risk profile, all screenings clear, standard customer pattern",
+    processingTime: 1200,
     alerts: 0,
-    status: 'approved'
+    riskFactors: [],
   },
   {
-    id: '3',
-    name: 'Ahmed Hassan',
-    email: 'ahmed@example.com',
-    riskScore: 92,
-    amlStatus: 'flagged',
-    pepStatus: 'flagged',
-    sanctionsStatus: 'clear',
-    lastScreened: '2024-08-22T08:45:00Z',
-    alerts: 3,
-    status: 'rejected'
-  },
-  {
-    id: '4',
-    name: 'Maria Rodriguez',
-    email: 'maria@example.com',
+    id: "2",
+    name: "Jane Smith",
+    email: "jane@example.com",
     riskScore: 45,
-    amlStatus: 'clear',
-    pepStatus: 'clear',
-    sanctionsStatus: 'pending',
-    lastScreened: '2024-08-22T07:20:00Z',
+    amlStatus: "clear",
+    pepStatus: "clear",
+    sanctionsStatus: "clear",
+    lastScreened: "2024-08-22T09:15:00Z",
+    aiDecision: "auto_approved",
+    aiConfidence: 87,
+    automationReason:
+      "Medium risk but within acceptable thresholds, no red flags detected",
+    processingTime: 2100,
     alerts: 0,
-    status: 'pending'
-  }
+    riskFactors: ["Medium transaction volume"],
+  },
+  {
+    id: "3",
+    name: "Ahmed Hassan",
+    email: "ahmed@example.com",
+    riskScore: 92,
+    amlStatus: "flagged",
+    pepStatus: "flagged",
+    sanctionsStatus: "clear",
+    lastScreened: "2024-08-22T08:45:00Z",
+    aiDecision: "auto_rejected",
+    aiConfidence: 96,
+    automationReason:
+      "High risk score, multiple screening flags, suspicious pattern detected",
+    processingTime: 3500,
+    alerts: 3,
+    riskFactors: [
+      "PEP match (87%)",
+      "Suspicious transaction patterns",
+      "High-risk geography",
+    ],
+  },
+  {
+    id: "4",
+    name: "Maria Rodriguez",
+    email: "maria@example.com",
+    riskScore: 78,
+    amlStatus: "clear",
+    pepStatus: "flagged",
+    sanctionsStatus: "pending",
+    lastScreened: "2024-08-22T07:20:00Z",
+    aiDecision: "requires_human_review",
+    aiConfidence: 65,
+    automationReason:
+      "Borderline case: PEP match with medium confidence, requires human judgment",
+    processingTime: 4200,
+    alerts: 1,
+    riskFactors: ["PEP match (65%)", "Incomplete sanctions screening"],
+  },
+  {
+    id: "5",
+    name: "Robert Chen",
+    email: "robert@example.com",
+    riskScore: 35,
+    amlStatus: "pending",
+    pepStatus: "clear",
+    sanctionsStatus: "clear",
+    lastScreened: "2024-08-22T06:10:00Z",
+    aiDecision: "pending_screening",
+    aiConfidence: 0,
+    automationReason:
+      "Screening in progress - AML check pending external API response",
+    processingTime: 0,
+    alerts: 0,
+    riskFactors: [],
+  },
+];
+const mockAuditLogs: AuditLog[] = [
+  {
+    id: "log1",
+    timestamp: "2024-08-22T10:45:00Z",
+    actor: "system",
+    action: "Auto-approved user 1",
+    result: "APPROVED",
+  },
+  {
+    id: "log2",
+    timestamp: "2024-08-22T09:30:00Z",
+    actor: "system",
+    action: "Auto-approved user 2",
+    result: "APPROVED",
+  },
+  {
+    id: "log3",
+    timestamp: "2024-08-22T08:50:00Z",
+    actor: "system",
+    action: "Auto-rejected user 3",
+    result: "REJECTED",
+  },
+  {
+    id: "log4",
+    timestamp: "2024-08-22T07:25:00Z",
+    actor: "compliance_officer",
+    action: "Manual review initiated for user 4",
+    result: "PENDING",
+  },
+  {
+    id: "log5",
+    timestamp: "2024-08-22T06:15:00Z",
+    actor: "system",
+    action: "Screening started for user 5",
+    result: "PENDING",
+  },
 ];
 
-const ComplianceDashboard: React.FC = () => {
-  const [users, setUsers] = useState<ComplianceUser[]>(mockUsers);
-  const [filteredUsers, setFilteredUsers] = useState<ComplianceUser[]>(mockUsers);
-  const [selectedUser, setSelectedUser] = useState<ComplianceUser | null>(null);
+
+const AIComplianceDashboard: React.FC = () => {
+  const [users, setUsers] = useState<AIComplianceUser[]>(mockUsers);
+  const [filteredUsers, setFilteredUsers] =
+    useState<AIComplianceUser[]>(mockUsers);
+  const [selectedUser, setSelectedUser] = useState<AIComplianceUser | null>(
+    null
+  );
   const [loading, setLoading] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [realTimeUpdates, setRealTimeUpdates] = useState<boolean>(true);
+  const [auditLog, setAuditLog] = useState<AuditLog[]>(mockAuditLogs);
+
   const [filters, setFilters] = useState<ComplianceFilters>({
-    riskLevel: 'all',
-    status: 'all',
-    dateRange: '7days'
+    aiDecision: "all",
+    riskLevel: "all",
+    confidence: "all",
+    dateRange: "7days",
   });
 
-  // Mock metrics data
-  const [metrics, setMetrics] = useState<ComplianceMetricsData>({
-    clearUsers: 1247,
-    underReview: 43,
-    flagged: 12,
-    pendingScreening: 8
+  const [aiMetrics, setAiMetrics] = useState<AISystemMetrics>({
+    totalProcessed: 2547,
+    autoApproved: 2234,
+    autoRejected: 245,
+    humanReviewRequired: 68,
+    averageProcessingTime: 2.3,
+    aiAccuracy: 97.8,
+    systemUptime: 99.9,
   });
+
+  // Simulate real-time updates
+  useEffect(() => {
+    if (!realTimeUpdates) return;
+
+    const interval = setInterval(() => {
+      setAiMetrics((prev) => ({
+        ...prev,
+        totalProcessed: prev.totalProcessed + Math.floor(Math.random() * 3),
+        autoApproved: prev.autoApproved + Math.floor(Math.random() * 2),
+      }));
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [realTimeUpdates]);
 
   // Filter users based on filters and search
   useEffect(() => {
     let filtered = users;
 
+    // AI Decision filter
+    if (filters.aiDecision !== "all") {
+      filtered = filtered.filter(
+        (user) => user.aiDecision === filters.aiDecision
+      );
+    }
+
     // Risk level filter
-    if (filters.riskLevel !== 'all') {
-      filtered = filtered.filter(user => {
-        if (filters.riskLevel === 'high') return user.riskScore >= 80;
-        if (filters.riskLevel === 'medium') return user.riskScore >= 50 && user.riskScore < 80;
-        if (filters.riskLevel === 'low') return user.riskScore < 50;
+    if (filters.riskLevel !== "all") {
+      filtered = filtered.filter((user) => {
+        if (filters.riskLevel === "high") return user.riskScore >= 70;
+        if (filters.riskLevel === "medium")
+          return user.riskScore >= 40 && user.riskScore < 70;
+        if (filters.riskLevel === "low") return user.riskScore < 40;
         return true;
       });
     }
 
-    // Status filter
-    if (filters.status !== 'all') {
-      filtered = filtered.filter(user => user.status === filters.status);
+    // AI Confidence filter
+    if (filters.confidence !== "all") {
+      filtered = filtered.filter((user) => {
+        if (filters.confidence === "high") return user.aiConfidence >= 90;
+        if (filters.confidence === "medium")
+          return user.aiConfidence >= 70 && user.aiConfidence < 90;
+        if (filters.confidence === "low") return user.aiConfidence < 70;
+        return true;
+      });
     }
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(user => 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (user) =>
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.automationReason.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     setFilteredUsers(filtered);
   }, [users, filters, searchTerm]);
 
-  const getRiskColor = (score: number): string => {
-    if (score >= 80) return 'text-red-600 bg-red-100';
-    if (score >= 50) return 'text-yellow-600 bg-yellow-100';
-    return 'text-green-600 bg-green-100';
-  };
-
-  const getStatusIcon = (status: ComplianceUser['amlStatus']): JSX.Element => {
-    switch (status) {
-      case 'clear': return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'flagged': return <AlertTriangle className="w-4 h-4 text-red-500" />;
-      case 'pending': return <Clock className="w-4 h-4 text-yellow-500" />;
-      default: return <XCircle className="w-4 h-4 text-gray-500" />;
+  const getDecisionColor = (
+    decision: AIComplianceUser["aiDecision"]
+  ): string => {
+    switch (decision) {
+      case "auto_approved":
+        return "text-green-600 bg-green-100 border-green-300";
+      case "auto_rejected":
+        return "text-red-600 bg-red-100 border-red-300";
+      case "requires_human_review":
+        return "text-yellow-600 bg-yellow-100 border-yellow-300";
+      case "pending_screening":
+        return "text-blue-600 bg-blue-100 border-blue-300";
+      default:
+        return "text-gray-600 bg-gray-100 border-gray-300";
     }
   };
 
-  const handleFilterChange = (filterType: keyof ComplianceFilters, value: string): void => {
-    setFilters(prev => ({
+  const getRiskColor = (score: number): string => {
+    if (score >= 70) return "text-red-600 bg-red-100";
+    if (score >= 40) return "text-yellow-600 bg-yellow-100";
+    return "text-green-600 bg-green-100";
+  };
+
+  const getConfidenceColor = (confidence: number): string => {
+    if (confidence >= 90) return "text-green-600";
+    if (confidence >= 70) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const getStatusIcon = (
+    status: AIComplianceUser["amlStatus"]
+  ): JSX.Element => {
+    switch (status) {
+      case "clear":
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case "flagged":
+        return <AlertTriangle className="w-4 h-4 text-red-500" />;
+      case "pending":
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <XCircle className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const handleFilterChange = (
+    filterType: keyof ComplianceFilters,
+    value: string
+  ): void => {
+    setFilters((prev) => ({
       ...prev,
-      [filterType]: value
+      [filterType]: value,
     }));
   };
 
-  const handleExport = (): void => {
-    // Mock export functionality
-    console.log('Exporting compliance data...');
-    // In real implementation, this would call an API to generate CSV/PDF
-  };
+  const handleOverride = (
+    userId: string,
+    decision: "approve" | "reject"
+  ): void => {
+    const timestamp = new Date().toISOString();
 
-  const handleUserAction = (userId: string, action: 'approve' | 'reject' | 'rescreen'): void => {
-    setUsers(prevUsers => 
-      prevUsers.map(user => 
-        user.id === userId 
-          ? { 
-              ...user, 
-              status: action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'pending'
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === userId
+          ? {
+              ...user,
+              aiDecision:
+                decision === "approve" ? "auto_approved" : "auto_rejected",
+              automationReason: `Human override: Manually ${decision}d by compliance officer`,
             }
           : user
       )
     );
+
+    // Add log entry
+    setAuditLog((prevLogs) => [
+      ...prevLogs,
+      {
+        id: `${Date.now()}`,
+        timestamp,
+        actor: "compliance_officer",
+        action: `Manual override on user ${userId}`,
+        result: decision.toUpperCase(),
+      },
+    ]);
+
     setSelectedUser(null);
   };
 
-  // Compliance Metrics Component
-  const ComplianceMetrics: React.FC = () => (
+  // AI System Metrics Component
+  const AISystemMetrics: React.FC = () => (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center">
+          <Bot className="w-8 h-8 text-blue-500" />
+          <div className="ml-4">
+            <p className="text-sm font-medium text-gray-600">
+              Requests Processed Today
+            </p>
+            <p className="text-2xl font-bold text-gray-900">
+              {aiMetrics.totalProcessed.toLocaleString()}
+            </p>
+            <p className="text-xs text-blue-600">
+              Avg: {aiMetrics.averageProcessingTime}s
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center">
           <CheckCircle className="w-8 h-8 text-green-500" />
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600">Clear Users</p>
-            <p className="text-2xl font-bold text-gray-900">{metrics.clearUsers.toLocaleString()}</p>
+            <p className="text-sm font-medium text-gray-600">Auto Approved</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {aiMetrics.autoApproved.toLocaleString()}
+            </p>
+            <p className="text-xs text-green-600">
+              {(
+                (aiMetrics.autoApproved / aiMetrics.totalProcessed) *
+                100
+              ).toFixed(1)}
+              %
+            </p>
           </div>
         </div>
       </div>
-      
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center">
+          <Brain className="w-8 h-8 text-purple-500" />
+          <div className="ml-4">
+            <p className="text-sm font-medium text-gray-600">Accuracy</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {aiMetrics.aiAccuracy}%
+            </p>
+            <p className="text-xs text-purple-600">
+              System Uptime: {aiMetrics.systemUptime}%
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center">
           <AlertTriangle className="w-8 h-8 text-yellow-500" />
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600">Under Review</p>
-            <p className="text-2xl font-bold text-gray-900">{metrics.underReview}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center">
-          <XCircle className="w-8 h-8 text-red-500" />
-          <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600">Flagged</p>
-            <p className="text-2xl font-bold text-gray-900">{metrics.flagged}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center">
-          <Clock className="w-8 h-8 text-blue-500" />
-          <div className="ml-4">
-            <p className="text-sm font-medium text-gray-600">Pending Screening</p>
-            <p className="text-2xl font-bold text-gray-900">{metrics.pendingScreening}</p>
+            <p className="text-sm font-medium text-gray-600">
+              Human Review Required
+            </p>
+            <p className="text-2xl font-bold text-gray-900">
+              {aiMetrics.humanReviewRequired}
+            </p>
+            <p className="text-xs text-yellow-600">
+              {(
+                (aiMetrics.humanReviewRequired / aiMetrics.totalProcessed) *
+                100
+              ).toFixed(1)}
+              %
+            </p>
           </div>
         </div>
       </div>
     </div>
   );
 
-  // User Details Modal Component
-  const UserDetailsModal: React.FC<{ user: ComplianceUser; onClose: () => void }> = ({ user, onClose }) => (
+  // AI Decision Details Modal
+  const AIDecisionModal: React.FC<{
+    user: AIComplianceUser;
+    onClose: () => void;
+  }> = ({ user, onClose }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-lg max-w-3xl w-full m-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold">Compliance Details - {user.name}</h2>
+            <div>
+              <h2 className="text-xl font-bold">
+                Decision Analysis - {user.name}
+              </h2>
+              <div className="flex items-center mt-2 space-x-4">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-medium border ${getDecisionColor(
+                    user.aiDecision
+                  )}`}
+                >
+                  {user.aiDecision.replace("_", " ").toUpperCase()}
+                </span>
+                <span
+                  className={`text-sm font-semibold ${getConfidenceColor(
+                    user.aiConfidence
+                  )}`}
+                >
+                  {user.aiConfidence > 0
+                    ? `${user.aiConfidence}% Confidence`
+                    : "Processing..."}
+                </span>
+              </div>
+            </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close modal"
             >
               <XCircle className="w-6 h-6" />
             </button>
@@ -236,15 +488,53 @@ const ComplianceDashboard: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-4">User Information</h3>
-              <div className="space-y-2 mb-6">
-                <p><span className="font-medium">Email:</span> {user.email}</p>
-                <p><span className="font-medium">User ID:</span> {user.id}</p>
-                <p><span className="font-medium">Last Screened:</span> {new Date(user.lastScreened).toLocaleDateString()}</p>
-              </div>
+              <h3 className="font-semibold mb-4 flex items-center">
+                <Brain className="w-5 h-5 mr-2 text-purple-500" />
+                AI Analysis
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Decision Reason:</h4>
+                  <p className="text-sm text-gray-700">
+                    {user.automationReason}
+                  </p>
+                </div>
 
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Processing Time:</h4>
+                  <p className="text-sm text-gray-700">
+                    {user.processingTime > 0
+                      ? `${(user.processingTime / 1000).toFixed(1)} seconds`
+                      : "In progress..."}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Risk Score:</h4>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-3">
+                      <div
+                        className={`h-3 rounded-full ${
+                          user.riskScore >= 70
+                            ? "bg-red-500"
+                            : user.riskScore >= 40
+                            ? "bg-yellow-500"
+                            : "bg-green-500"
+                        }`}
+                        style={{ width: `${user.riskScore}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold">
+                      {user.riskScore}/100
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
               <h3 className="font-semibold mb-4">Screening Results</h3>
-              <div className="space-y-3">
+              <div className="space-y-3 mb-6">
                 <div className="flex justify-between items-center">
                   <span>AML Check:</span>
                   <div className="flex items-center">
@@ -263,72 +553,58 @@ const ComplianceDashboard: React.FC = () => {
                   <span>Sanctions:</span>
                   <div className="flex items-center">
                     {getStatusIcon(user.sanctionsStatus)}
-                    <span className="ml-2 capitalize">{user.sanctionsStatus}</span>
+                    <span className="ml-2 capitalize">
+                      {user.sanctionsStatus}
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div>
-              <h3 className="font-semibold mb-4">Risk Assessment</h3>
-              <div className="mb-6">
-                <div className="flex justify-between mb-2">
-                  <span>Risk Score</span>
-                  <span className="font-semibold">{user.riskScore}/100</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className={`h-3 rounded-full transition-all duration-300 ${
-                      user.riskScore >= 80 ? 'bg-red-500' : 
-                      user.riskScore >= 50 ? 'bg-yellow-500' : 'bg-green-500'
-                    }`}
-                    style={{ width: `${user.riskScore}%` }}
-                  />
-                </div>
-              </div>
-
-              {user.alerts > 0 && (
+              {user.riskFactors.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-4">Active Alerts ({user.alerts})</h3>
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex">
-                      <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
-                      <div className="ml-3">
-                        <p className="text-sm text-red-800">
-                          {user.pepStatus === 'flagged' && 'PEP Match: Potential match found in political figures database'}
-                          {user.amlStatus === 'flagged' && 'AML Alert: Suspicious transaction patterns detected'}
-                        </p>
-                        <p className="text-xs text-red-600 mt-1">
-                          Confidence: 85% | Last updated: 2 hours ago
-                        </p>
+                  <h3 className="font-semibold mb-4">Risk Factors Detected</h3>
+                  <div className="space-y-2">
+                    {user.riskFactors.map((factor, index) => (
+                      <div
+                        key={index}
+                        className="bg-red-50 border border-red-200 rounded-lg p-3"
+                      >
+                        <div className="flex">
+                          <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5" />
+                          <span className="ml-2 text-sm text-red-800">
+                            {factor}
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-4">
-            <button 
-              onClick={() => handleUserAction(user.id, 'approve')}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Approve
-            </button>
-            <button 
-              onClick={() => handleUserAction(user.id, 'reject')}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Reject
-            </button>
-            <button 
-              onClick={() => handleUserAction(user.id, 'rescreen')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Re-screen
-            </button>
-          </div>
+          {user.aiDecision === "requires_human_review" && (
+            <div className="mt-6 pt-6 border-t">
+              <h3 className="font-semibold mb-4">Human Override Options</h3>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => handleOverride(user.id, "approve")}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Override: Approve
+                </button>
+                <button
+                  onClick={() => handleOverride(user.id, "reject")}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Override: Reject
+                </button>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  Request Additional Data
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -338,11 +614,40 @@ const ComplianceDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Compliance Dashboard</h1>
-          <p className="text-gray-600 mt-2">Monitor AML, PEP, and sanctions screening results</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <Bot className="w-8 h-8 mr-3 text-blue-500" />
+                Compliance Dashboard
+              </h1>
+              <p className="text-gray-600 mt-2">
+                AML, PEP, and sanctions screening
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    realTimeUpdates
+                      ? "bg-green-500 animate-pulse"
+                      : "bg-gray-400"
+                  } mr-2`}
+                ></div>
+                <span className="text-sm text-gray-600">
+                  {realTimeUpdates ? "Live Updates" : "Updates Paused"}
+                </span>
+              </div>
+              <button
+                onClick={() => setRealTimeUpdates(!realTimeUpdates)}
+                className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-colors"
+              >
+                {realTimeUpdates ? "Pause" : "Resume"}
+              </button>
+            </div>
+          </div>
         </div>
 
-        <ComplianceMetrics />
+        <AISystemMetrics />
 
         {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow mb-6 p-4">
@@ -351,48 +656,46 @@ const ComplianceDashboard: React.FC = () => {
               <Search className="w-4 h-4 text-gray-500 mr-2" />
               <input
                 type="text"
-                placeholder="Search users by name or email..."
+                placeholder="Search by name, email, or AI reasoning..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            
+
             <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                <Filter className="w-4 h-4 text-gray-500 mr-2" />
-                <span className="text-sm font-medium">Filters:</span>
-              </div>
-              
               <select
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={filters.riskLevel}
-                onChange={(e) => handleFilterChange('riskLevel', e.target.value)}
+                value={filters.aiDecision}
+                onChange={(e) =>
+                  handleFilterChange("aiDecision", e.target.value)
+                }
               >
-                <option value="all">All Risk Levels</option>
-                <option value="high">High Risk (80+)</option>
-                <option value="medium">Medium Risk (50-79)</option>
-                <option value="low">Low Risk (&lt;50)</option>
+                <option value="all">All AI Decisions</option>
+                <option value="auto_approved">Auto Approved</option>
+                <option value="auto_rejected">Auto Rejected</option>
+                <option value="requires_human_review">
+                  Needs Human Review
+                </option>
+                <option value="pending_screening">Pending Screening</option>
               </select>
 
               <select
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
+                value={filters.confidence}
+                onChange={(e) =>
+                  handleFilterChange("confidence", e.target.value)
+                }
               >
-                <option value="all">All Status</option>
-                <option value="approved">Approved</option>
-                <option value="under_review">Under Review</option>
-                <option value="rejected">Rejected</option>
-                <option value="pending">Pending</option>
+                <option value="all">All Confidence Levels</option>
+                <option value="high">High Confidence (90%+)</option>
+                <option value="medium">Medium Confidence (70-89%)</option>
+                <option value="low">Low Confidence (&lt;70%)</option>
               </select>
-              
-              <button 
-                onClick={handleExport}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-colors"
-              >
+
+              <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-colors">
                 <Download className="w-4 h-4 mr-1" />
-                Export
+                Export AI Logs
               </button>
             </div>
           </div>
@@ -408,22 +711,19 @@ const ComplianceDashboard: React.FC = () => {
                     User
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Decision
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Confidence
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Risk Score
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    AML
+                    Screening Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    PEP
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sanctions
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Alerts
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Processing Time
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -431,87 +731,144 @@ const ComplianceDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-4 text-center">
-                      <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                {filteredUsers.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {user.email}
+                        </div>
                       </div>
                     </td>
-                  </tr>
-                ) : filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                      No users found matching your criteria
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getDecisionColor(
+                          user.aiDecision
+                        )}`}
+                      >
+                        {user.aiDecision.replace("_", " ")}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`text-sm font-semibold ${getConfidenceColor(
+                          user.aiConfidence
+                        )}`}
+                      >
+                        {user.aiConfidence > 0 ? `${user.aiConfidence}%` : "—"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRiskColor(
+                          user.riskScore
+                        )}`}
+                      >
+                        {user.riskScore}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex space-x-1">
+                        <div title="AML">{getStatusIcon(user.amlStatus)}</div>
+                        <div title="PEP">{getStatusIcon(user.pepStatus)}</div>
+                        <div title="Sanctions">
+                          {getStatusIcon(user.sanctionsStatus)}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.processingTime > 0
+                        ? `${(user.processingTime / 1000).toFixed(1)}s`
+                        : "—"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <button
+                        onClick={() => setSelectedUser(user)}
+                        className="text-blue-600 hover:text-blue-900 transition-colors flex items-center"
+                      >
+                        <Brain className="w-4 h-4 mr-1" />
+                        View Analysis
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRiskColor(user.riskScore)}`}>
-                          {user.riskScore}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusIcon(user.amlStatus)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusIcon(user.pepStatus)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusIcon(user.sanctionsStatus)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {user.alerts > 0 ? (
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                            {user.alerts}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${
-                          user.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          user.status === 'under_review' ? 'bg-yellow-100 text-yellow-800' :
-                          user.status === 'pending' ? 'bg-blue-100 text-blue-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {user.status.replace('_', ' ')}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button
-                          onClick={() => setSelectedUser(user)}
-                          className="text-blue-600 hover:text-blue-900 transition-colors"
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
         </div>
 
         {selectedUser && (
-          <UserDetailsModal
+          <AIDecisionModal
             user={selectedUser}
             onClose={() => setSelectedUser(null)}
           />
         )}
+        {/* Audit Trail Table */}
+        <div className="bg-white rounded-lg shadow overflow-hidden mt-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Audit Trail</h2>
+            <p className="text-sm text-gray-600 mt-1">Recent compliance actions and system decisions</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Timestamp
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actor
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Action
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Result
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {auditLog.map((log) => (
+                  <tr
+                    key={log.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
+                      {log.actor.replace('_', ' ')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {log.action}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        log.result === 'APPROVED' ? 'text-green-700 bg-green-100' :
+                        log.result === 'REJECTED' ? 'text-red-700 bg-red-100' :
+                        'text-yellow-700 bg-yellow-100'
+                      }`}>
+                        {log.result}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
+     {/* Audit Trail Table */}
+       
+
     </div>
   );
 };
 
-export default ComplianceDashboard;
+export default AIComplianceDashboard;
