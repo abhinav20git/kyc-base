@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DocumentTypeSelector } from '../DocumentTypeSelector';
 import { DocumentUpload, DocumentType } from '../DocumentUpload';
-
+import { KYCVerificationData } from '@/context/CurrentStepContext';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,76 +13,75 @@ import { CameraCapture } from '../CameraCapture';
 import ChatbotWidget from '../ChatWidget';
 import { uploadDocument } from '@/api/upload';
 import { ExtractedFields } from '../ExtractedFields';
+import { CurrentStep, useKYCVerificationContext } from '@/context/CurrentStepContext';
 
-type Step = 'select' | 'upload' | 'extract' | 'face' | 'complete';
+// type Step = 'select' | 'upload' | 'extract' | 'face' | 'complete';
 
 export function KYCApp() {
-  const [currentStep, setCurrentStep] = useState<Step>('select');
-  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType>(null);
-  const [uploadedFile, setUploadedFile] = useState<UploadedFile>({file: null, type: null, preview: null});
+  const { kycVerificationData, setKycVerificationData } = useKYCVerificationContext()
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile>({ file: null, type: null, preview: null });
   const [isProcessing, setIsProcessing] = useState(false);
-  const [extractedData,setExtractedData]=useState(null);
+  const [extractedData, setExtractedData] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
   const steps = [
 
-  { id: 'select', label: 'Select Document', completed: currentStep !== 'select' },
-  { id: 'upload', label: 'Upload Document', completed: ['extract', 'face', 'complete'].includes(currentStep) },
-  { id: 'extract', label: 'Extract Data', completed: ['face', 'complete'].includes(currentStep) },
-  { id: 'face', label: 'Face Detection', completed: currentStep === 'complete' },
-  { id: 'complete', label: 'Complete', completed: false }
-];
+    { id: 'select', label: 'Select Document', completed: kycVerificationData.currentStep !== 'select' },
+    { id: 'upload', label: 'Upload Document', completed: ['extract', 'face', 'complete'].includes(kycVerificationData.currentStep) },
+    { id: 'extract', label: 'Extract Data', completed: ['face', 'complete'].includes(kycVerificationData.currentStep) },
+    { id: 'face', label: 'Face Detection', completed: kycVerificationData.currentStep === 'complete' },
+    { id: 'complete', label: 'Complete', completed: false }
+  ];
 
 
   const handleDocumentTypeSelect = (type: DocumentType) => {
     console.log(type)
-    setSelectedDocumentType(type);
-    setCurrentStep('upload');
+    setKycVerificationData({selectedDocumentType:type ,currentStep: CurrentStep.Upload});
   };
 
-const handleFileUpload = async (file: File, type: DocumentType) => {
-  try {
-    if (!file.type.startsWith("image/")) {
-      throw new Error("Invalid file type, please upload image");
-    }
-    const preview = URL.createObjectURL(file);
-    setUploadedFile({ file, type, preview });
+  const handleFileUpload = async (file: File, type: DocumentType) => {
+    try {
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Invalid file type, please upload image");
+      }
+      const preview = URL.createObjectURL(file);
+      setUploadedFile({ file, type, preview });
 
-    
-    setIsProcessing(true);
 
-    const data = await uploadDocument(file, type);
-   
-   if(data.data.predicted_class.toLowerCase() !== type){
-      toast({
-        title: "Wrong Document format selected!",
-        description: "You have selected wrong format for this document type.",
-      });
+      setIsProcessing(true);
+
+      const data = await uploadDocument(file, type);
+
+      if (data.data.predicted_class.toLowerCase() !== type) {
+        toast({
+          title: "Wrong Document format selected!",
+          description: "You have selected wrong format for this document type.",
+        });
+        setIsProcessing(false);
+        setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Upload});
+        return;
+      }
+      setExtractedData(data.data.extracted_data)
       setIsProcessing(false);
-      setCurrentStep("upload");
-      return; 
-    }
-     setExtractedData(data.data.extracted_data)
-    setIsProcessing(false);
-    setIsSuccess(true);
-     setCurrentStep("extract")
+      setIsSuccess(true);
+      setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Extract});
 
-    toast({
-      title: "Document processed successfully!",
-      description: "All fields have been extracted automatically.",
-    });
-  } catch (error) {
-    setIsProcessing(false);
-    toast({
-      title: "Invalid request",
-      description: (error as Error).message,
-    });
-  }
-};
+      toast({
+        title: "Document processed successfully!",
+        description: "All fields have been extracted automatically.",
+      });
+    } catch (error) {
+      setIsProcessing(false);
+      toast({
+        title: "Invalid request",
+        description: (error as Error).message,
+      });
+    }
+  };
 
   const handleExtractComplete = () => {
-    setCurrentStep('face');
+    setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Face});
     toast({
       title: "Data Extraction Complete!",
       description: "Moving to capture step for verification.",
@@ -90,7 +89,7 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
   };
 
   const handleCaptureComplete = () => {
-    setCurrentStep('complete');
+    setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Complete});
     toast({
       title: "KYC Verification Complete!",
       description: "Your document has been verified successfully.",
@@ -98,34 +97,40 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
   };
 
   const handleBack = () => {
-  if (currentStep === 'upload') {
-    setCurrentStep('select');
-    setUploadedFile({file: null, type: null, preview: null});
-    setIsProcessing(false);
-    setIsSuccess(false);
-    setSelectedDocumentType(null);
-  } else if (currentStep === 'extract') {
-    setCurrentStep('upload');
-  } else if (currentStep === 'face') {
-    setCurrentStep('extract');
-  }
-};
+    if (kycVerificationData.currentStep === 'upload') {
+      setKycVerificationData({selectedDocumentType:null ,currentStep: CurrentStep.Select});
+      setUploadedFile({ file: null, type: null, preview: null });
+      setIsProcessing(false);
+      setIsSuccess(false);
+    } else if (kycVerificationData.currentStep === 'extract') {
+      setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Upload});
+    } else if (kycVerificationData.currentStep === 'face') {
+      setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Extract});
+    }
+  };
 
   const getProgressValue = () => {
-  switch (currentStep) {
-    case 'select': return 20;
-    case 'upload': return 40;
-    case 'extract': return 60;
-    case 'face': return 80;
-    case 'complete': return 100;
-    default: return 0;
-  }
-};
+    switch (kycVerificationData.currentStep) {
+      case 'select': return 20;
+      case 'upload': return 40;
+      case 'extract': return 60;
+      case 'face': return 80;
+      case 'complete': return 100;
+      default: return 0;
+    }
+  };
+
+  useEffect(() => {
+    const data = localStorage.getItem("kycVerificationData");
+    if(!data) return;
+    const kycVerificationData = JSON.parse(data) as KYCVerificationData;
+    setKycVerificationData(kycVerificationData);
+  }, [])
 
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-      
+
         <div className="text-center space-y-4 mb-8">
           <div className="flex items-center justify-center space-x-2">
             <Shield className="w-8 h-8 text-primary" />
@@ -144,41 +149,39 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-card-foreground">Verification Progress</h3>
               <Badge variant="outline" className="bg-primary/10">
-  Step {steps.findIndex(s => s.id === currentStep) + 1} of {steps.length}
-</Badge>
+                Step {steps.findIndex(s => s.id === kycVerificationData.currentStep) + 1} of {steps.length}
+              </Badge>
             </div>
-            
+
             <Progress value={getProgressValue()} className="mb-4" />
-            
+
             <div className="flex items-center justify-between flex-nowrap space-x-4 overflow-x-auto">
-  {steps.map((step) => (
-    <div key={step.id} className="flex items-center space-x-2">
-      <div
-        className={`w-3 h-3 rounded-full ${
-          step.completed
-            ? 'bg-success'
-            : step.id === currentStep
-            ? 'bg-primary'
-            : 'bg-gray-200'
-        }`}
-      />
-      <span
-        className={`text-sm ${
-          step.id === currentStep
-            ? 'text-foreground font-medium'
-            : 'text-muted-foreground'
-        }`}
-      >
-        {step.label}
-      </span>
-    </div>
-  ))}
-</div>
+              {steps.map((step) => (
+                <div key={step.id} className="flex items-center space-x-2">
+                  <div
+                    className={`w-3 h-3 rounded-full ${step.completed
+                        ? 'bg-success'
+                        : step.id === kycVerificationData.currentStep
+                          ? 'bg-primary'
+                          : 'bg-gray-200'
+                      }`}
+                  />
+                  <span
+                    className={`text-sm ${step.id === kycVerificationData.currentStep
+                        ? 'text-foreground font-medium'
+                        : 'text-muted-foreground'
+                      }`}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </Card>
 
-        
-        {currentStep !== 'select' && currentStep !== 'complete' && (
+
+        {kycVerificationData.currentStep !== 'select' && kycVerificationData.currentStep !== 'complete' && (
           <div className="mb-6">
             <Button variant="outline" onClick={handleBack}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -189,25 +192,25 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
 
         {/* Step Content */}
         <div className="space-y-6">
-          {currentStep === 'select' && (
+          {kycVerificationData.currentStep === 'select' && (
             <DocumentTypeSelector
-              selectedType={selectedDocumentType}
+              selectedType={kycVerificationData.selectedDocumentType}
               onTypeSelect={handleDocumentTypeSelect}
             />
           )}
 
-          {currentStep === 'upload' && (
+          {kycVerificationData.currentStep === 'upload' && (
             <div className="space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-2xl font-bold text-foreground">Upload Document</h2>
                 <p className="text-muted-foreground">
-                  Upload your {selectedDocumentType.toUpperCase()} document for verification
+                  Upload your {kycVerificationData.selectedDocumentType.toUpperCase()} document for verification
                 </p>
               </div>
-              
+
               <div className="max-w-md mx-auto">
                 <DocumentUpload
-                  documentType={selectedDocumentType}
+                  documentType={kycVerificationData.selectedDocumentType}
                   onFileUpload={handleFileUpload}
                   uploadedFile={uploadedFile || undefined}
                   isProcessing={isProcessing}
@@ -217,31 +220,31 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
             </div>
           )}
 
-          {currentStep === 'extract' && (
+          {kycVerificationData.currentStep === 'extract' && (
             <ExtractedFields
-              documentType={selectedDocumentType}
+              documentType={kycVerificationData.selectedDocumentType}
               data={extractedData}
               onVerify={handleExtractComplete}
               uploadedFile={uploadedFile || undefined}
             />
           )}
-          {currentStep === 'face' && (
+          {kycVerificationData.currentStep === 'face' && (
             <CameraCapture
               idPhoto={uploadedFile.file}
             />
           )}
 
-          {currentStep === 'complete' && (
+          {kycVerificationData.currentStep === 'complete' && (
             <Card className="max-w-md mx-auto bg-gradient-to-br from-success/10 to-primary/5 border-success/20">
               <div className="p-8 text-center space-y-6">
                 <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mx-auto">
                   <CheckCircle className="w-8 h-8 text-success" />
                 </div>
-                
+
                 <div className="space-y-2">
                   <h3 className="text-xl font-bold text-foreground">Verification Complete!</h3>
                   <p className="text-muted-foreground">
-                    Your {selectedDocumentType.toUpperCase()} document has been successfully verified and processed.
+                    Your {kycVerificationData.selectedDocumentType?.toUpperCase()} document has been successfully verified and processed.
                   </p>
                 </div>
 
@@ -249,12 +252,12 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
                   <div className="p-4 bg-card rounded-lg border border-border">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Document Type:</span>
-                      <Badge variant="default">{selectedDocumentType.toUpperCase()}</Badge>
+                      <Badge variant="default">{kycVerificationData.selectedDocumentType.toUpperCase()}</Badge>
                     </div>
                   </div>
-                  
-                  <Button 
-                    onClick={() => window.location.reload()} 
+
+                  <Button
+                    onClick={() => window.location.reload()}
                     className="w-full"
                     variant="outline"
                   >
@@ -265,9 +268,9 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
             </Card>
           )}
         </div>
-        <ChatbotWidget/>
+        <ChatbotWidget />
       </div>
-      
+
     </div>
   );
 }
