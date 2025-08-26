@@ -52,7 +52,7 @@ export function KYCApp() {
       setIsProcessing(true);
 
       const data = await uploadDocument(file, type);
-
+      // const fileUrl = data.data.fileURL;
       if (data.data.predicted_class.toLowerCase() !== type) {
         toast({
           title: "Wrong Document format selected!",

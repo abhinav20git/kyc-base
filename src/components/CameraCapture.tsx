@@ -51,7 +51,7 @@ export function CameraCapture({ idPhoto }) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/users/start-liveness`, {
+      const res = await fetch(`${API_BASE}/AI/start-liveness`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ export function CameraCapture({ idPhoto }) {
     setIsLoading(true);
     console.log("entered loading")
     try {
-      const res = await fetch(`${API_BASE}/users/liveness-result/${sessionId}`, {
+      const res = await fetch(`${API_BASE}/AI/liveness-result/${sessionId}`, {
         method: "GET",
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`,
@@ -120,7 +120,7 @@ export function CameraCapture({ idPhoto }) {
         formData.append('livenessImageBytes', result.ReferenceImage.Bytes);
       }
       const res = await axios.post(
-        `${API_BASE}/users/compare-faces`,
+        `${API_BASE}/AI/compare-faces`,
         formData,
         {
           headers: {

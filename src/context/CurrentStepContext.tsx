@@ -11,7 +11,8 @@ export enum CurrentStep {
 
 export interface KYCVerificationData {
     currentStep: CurrentStep,
-    selectedDocumentType: DocumentType | null
+    selectedDocumentType: DocumentType | null,
+    // filePreview: string
 }
 
 interface KYCVerificationContextType {
