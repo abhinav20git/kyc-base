@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Shield, CheckCircle, XCircle } from 'lucide-react';
 
-const BACKEND_URL = 'https://kcx21158-3001.inc1.devtunnels.ms';
+const BACKEND_URL = 'https://kcx21158-3001.inc1.devtunnels.ms/';
 
 const AgentChecklist = ({ onSubmit, disabled, sessionId, token }) => {
   const [checklist, setChecklist] = useState([

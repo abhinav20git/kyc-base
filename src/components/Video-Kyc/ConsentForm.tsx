@@ -74,3 +74,5 @@ const ConsentFormModal = ({
 };
 
 export default ConsentFormModal;
+
+

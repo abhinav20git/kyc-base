@@ -1,7 +1,7 @@
 
 import { io } from 'socket.io-client';
 
-const BACKEND_URL = 'https://kcx21158-3001.inc1.devtunnels.ms';
+const BACKEND_URL = 'https://kcx21158-3001.inc1.devtunnels.ms/';
 
 class WebRTCService {
   isInitiator: boolean;
@@ -28,6 +28,7 @@ class WebRTCService {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 3;
     this.isReconnecting = false;
+    
   }
 
   async initialize(room, user, isCustomer = true) {
@@ -383,7 +384,8 @@ async getUserMedia() {
         noiseSuppression: true,
         autoGainControl: true,
         sampleRate: 44100,
-        channelCount: 2,    
+        channelCount: 1, 
+          
       }
     });
 
@@ -396,7 +398,6 @@ async getUserMedia() {
     this.callbacks.onLocalStream?.(this.localStream);
   } catch (error) {
     console.error('Error accessing media devices:', error);
-    // Try with simpler constraints
     try {
       this.localStream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -498,6 +499,8 @@ async getUserMedia() {
     }
   }
 
+  
+
   sendSignalingMessage(signal) {
     if (this.socket && this.socket.connected) {
       this.socket.emit('webrtc-signal', {
@@ -508,6 +511,7 @@ async getUserMedia() {
     }
   }
 
+  
   toggleVideo(enabled) {
     if (this.localStream) {
       this.localStream.getVideoTracks().forEach(track => {
