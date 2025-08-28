@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, CheckCircle, AlertCircle, Camera, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UploadedFile } from '@/utils/constants';
+import { useKYCVerificationContext } from '@/context/CurrentStepContext';
 
 export type DocumentType = 'pan' | 'aadhaar' | 'passport';
 
@@ -34,7 +35,7 @@ export function DocumentUpload({
   const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
+  const { kycVerificationData } = useKYCVerificationContext()
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       onFileUpload(acceptedFiles[0], documentType);
@@ -95,7 +96,7 @@ export function DocumentUpload({
     onDrop,
     accept: {
       'image/*': ['.png', '.jpg', '.jpeg'],
-      'application/pdf': ['.pdf']
+      // 'application/pdf': ['.pdf']
     },
     multiple: false
   });
@@ -113,6 +114,7 @@ export function DocumentUpload({
     if (uploadedFile) return uploadedFile.file?.name;
     return `Drop your ${documentTypeLabels[documentType]} here or click to browse`;
   };
+  console.log("file", kycVerificationData.filePreview, kycVerificationData.filePreview && !isProcessing && isSuccess)
   return (
     <Card className="relative overflow-hidden">
       <div
@@ -138,7 +140,7 @@ export function DocumentUpload({
             </p>
           </div>
 
-          {!uploadedFile.file && !isProcessing && (
+          {!kycVerificationData.filePreview && !isProcessing && (
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2 justify-center">
                 <Badge variant="secondary">PNG</Badge>
@@ -161,22 +163,13 @@ export function DocumentUpload({
           )}
           {/* Image */}
           {
-            uploadedFile.file?.type.startsWith('image/') && !isProcessing && isSuccess && (
+            kycVerificationData.filePreview && !isProcessing && isSuccess && (
               <div>
-                <img src={uploadedFile.preview} alt="" />
+                <img src={kycVerificationData.filePreview} alt="" />
               </div>
             )
           }
-          {
-            uploadedFile.file?.type == 'application/pdf' && !isProcessing && isSuccess && (
-              <iframe
-                src={uploadedFile.preview}
-                className="w-full h-64"
-                title="PDF Preview"
-              ></iframe>
-            )
-          }
-          {uploadedFile.file && !isProcessing && !isSuccess && (
+          {kycVerificationData.filePreview && !isProcessing && !isSuccess && (
             <div className="flex gap-2">
               <Button variant="outline" size="sm">
                 Change File

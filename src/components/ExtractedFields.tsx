@@ -8,14 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { useEffect, useState } from 'react';
 import { UploadedFile } from '@/utils/constants';
+import { useKYCVerificationContext } from '@/context/CurrentStepContext';
 
-interface ExtractedData {
+export interface ExtractedData {
   [key: string]: string;
 }
 
 interface ExtractedFieldsProps {
   documentType: DocumentType;
-  data: ExtractedData;
   onVerify: () => void;
   uploadedFile: UploadedFile
 }
@@ -43,23 +43,22 @@ const fieldLabels: Record<DocumentType, Record<string, string>> = {
   }
 };
 
-export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: ExtractedFieldsProps) {
+export function ExtractedFields({ documentType, onVerify, uploadedFile }: ExtractedFieldsProps) {
   const { toast } = useToast();
-
-  const [extractedData, setExtractedData] = useState<ExtractedData>(
-    data || {}
-  );
+  const {kycVerificationData, setKycVerificationData} = useKYCVerificationContext()
+  const [extractedData, setExtractedData] = useState<ExtractedData>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentField, setCurrentField] = useState<string>('');
   const [currentValue, setCurrentValue] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [currentFieldLabel, setCurrentFieldLabel] = useState<string>('');
   useEffect(() => {
-    if (data && Object.keys(data).length > 0) {
-      setExtractedData(data);
+    if (kycVerificationData.extractedData && Object.keys(kycVerificationData.extractedData).length > 0) {
+      setExtractedData(kycVerificationData.extractedData);
+      console.log("extracted data: ", kycVerificationData.extractedData)
       setLoading(false);
     }
-  }, [data]);
+  }, [kycVerificationData.extractedData]);
 
 
   if (loading) {
@@ -161,8 +160,8 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
         </div>
       </div>
       {
-        uploadedFile.file?.type.startsWith('image/') &&
-        <img src={uploadedFile.preview} alt="" width={'420px'} height={"320px"}
+        kycVerificationData.filePreview &&
+        <img src={kycVerificationData.filePreview} alt="" width={'420px'} height={"320px"}
           className='self-center rounded border-2 border-blue-500' />
       }
 

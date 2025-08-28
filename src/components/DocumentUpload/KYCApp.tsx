@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Shield, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Shield, ArrowLeft, CheckCircle, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UploadedFile } from '@/utils/constants';
 import { CameraCapture } from '../CameraCapture';
@@ -21,7 +21,7 @@ export function KYCApp() {
   const { kycVerificationData, setKycVerificationData } = useKYCVerificationContext()
   const [uploadedFile, setUploadedFile] = useState<UploadedFile>({ file: null, type: null, preview: null });
   const [isProcessing, setIsProcessing] = useState(false);
-  const [extractedData, setExtractedData] = useState(null);
+
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
@@ -36,8 +36,14 @@ export function KYCApp() {
 
 
   const handleDocumentTypeSelect = (type: DocumentType) => {
-    console.log(type)
-    setKycVerificationData({selectedDocumentType:type ,currentStep: CurrentStep.Upload});
+    console.log("type selected", type)
+    if(kycVerificationData.selectedDocumentType != type){
+      setKycVerificationData({ filePreview: null, predictedClass: null, extractedData: null, selectedDocumentType: type, currentStep: CurrentStep.Upload, lastStep: CurrentStep.Upload, faceData: null, livenessResult: null });
+    } else if(kycVerificationData.lastStep == 'select'){
+      setKycVerificationData({ ...kycVerificationData, selectedDocumentType: type, currentStep: CurrentStep.Upload, lastStep: CurrentStep.Upload });
+    } else {
+      setKycVerificationData({ ...kycVerificationData, selectedDocumentType: type, currentStep: CurrentStep.Upload });
+    }
   };
 
   const handleFileUpload = async (file: File, type: DocumentType) => {
@@ -45,27 +51,27 @@ export function KYCApp() {
       if (!file.type.startsWith("image/")) {
         throw new Error("Invalid file type, please upload image");
       }
-      const preview = URL.createObjectURL(file);
-      setUploadedFile({ file, type, preview });
+      // const preview = URL.createObjectURL(file);
 
 
       setIsProcessing(true);
 
       const data = await uploadDocument(file, type);
-      // const fileUrl = data.data.fileURL;
+      const fileUrl = data.data.session.fileURL;
+      console.log(data, "data.data", data.data)
+      setUploadedFile({ file, type, preview: fileUrl, });
       if (data.data.predicted_class.toLowerCase() !== type) {
         toast({
           title: "Wrong Document format selected!",
           description: "You have selected wrong format for this document type.",
         });
         setIsProcessing(false);
-        setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Upload});
+        setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Upload, lastStep: CurrentStep.Upload, predictedClass: data.data.predicted_class.toLowerCase() });
         return;
       }
-      setExtractedData(data.data.extracted_data)
       setIsProcessing(false);
       setIsSuccess(true);
-      setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Extract});
+      setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Extract, filePreview: fileUrl, lastStep: CurrentStep.Extract, extractedData: data.data.extracted_data });
 
       toast({
         title: "Document processed successfully!",
@@ -81,7 +87,7 @@ export function KYCApp() {
   };
 
   const handleExtractComplete = () => {
-    setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Face});
+    setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Face, lastStep: CurrentStep.Face });
     toast({
       title: "Data Extraction Complete!",
       description: "Moving to capture step for verification.",
@@ -89,7 +95,7 @@ export function KYCApp() {
   };
 
   const handleCaptureComplete = () => {
-    setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Complete});
+    setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Complete, lastStep: CurrentStep.Complete });
     toast({
       title: "KYC Verification Complete!",
       description: "Your document has been verified successfully.",
@@ -98,16 +104,34 @@ export function KYCApp() {
 
   const handleBack = () => {
     if (kycVerificationData.currentStep === 'upload') {
-      setKycVerificationData({selectedDocumentType:null ,currentStep: CurrentStep.Select});
+      // setKycVerificationData({ ...kycVerificationData, selectedDocumentType: null, currentStep: CurrentStep.Select });
+      setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Select });
       setUploadedFile({ file: null, type: null, preview: null });
       setIsProcessing(false);
       setIsSuccess(false);
     } else if (kycVerificationData.currentStep === 'extract') {
-      setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Upload});
+      setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Upload });
     } else if (kycVerificationData.currentStep === 'face') {
-      setKycVerificationData({...kycVerificationData ,currentStep: CurrentStep.Extract});
+      setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Extract });
     }
   };
+
+  const handleNext = () => {
+    if (kycVerificationData.currentStep === 'select' && kycVerificationData.lastStep !== 'select') {
+      setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Upload });
+      // setKycVerificationData({ ...kycVerificationData, selectedDocumentType: null, currentStep: CurrentStep.Select });
+      setUploadedFile({ file: null, type: null, preview: null });
+      setIsProcessing(false);
+      setIsSuccess(false);
+    } else if (kycVerificationData.currentStep === 'upload' && kycVerificationData.lastStep !== 'upload') {
+      setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Extract });
+    } else if (kycVerificationData.currentStep === 'extract' && kycVerificationData.lastStep !== 'extract') {
+      setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Face });
+    } else if (kycVerificationData.currentStep === 'face' && kycVerificationData.lastStep !== 'face') {
+      setKycVerificationData({ ...kycVerificationData, currentStep: CurrentStep.Complete });
+    }
+  };
+
 
   const getProgressValue = () => {
     switch (kycVerificationData.currentStep) {
@@ -120,12 +144,11 @@ export function KYCApp() {
     }
   };
 
+  
+
   useEffect(() => {
-    const data = localStorage.getItem("kycVerificationData");
-    if(!data) return;
-    const kycVerificationData = JSON.parse(data) as KYCVerificationData;
-    setKycVerificationData(kycVerificationData);
-  }, [])
+    setIsSuccess(kycVerificationData.filePreview ? true : false)
+  }, [kycVerificationData])
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -160,16 +183,16 @@ export function KYCApp() {
                 <div key={step.id} className="flex items-center space-x-2">
                   <div
                     className={`w-3 h-3 rounded-full ${step.completed
-                        ? 'bg-success'
-                        : step.id === kycVerificationData.currentStep
-                          ? 'bg-primary'
-                          : 'bg-gray-200'
+                      ? 'bg-success'
+                      : step.id === kycVerificationData.currentStep
+                        ? 'bg-primary'
+                        : 'bg-gray-200'
                       }`}
                   />
                   <span
                     className={`text-sm ${step.id === kycVerificationData.currentStep
-                        ? 'text-foreground font-medium'
-                        : 'text-muted-foreground'
+                      ? 'text-foreground font-medium'
+                      : 'text-muted-foreground'
                       }`}
                   >
                     {step.label}
@@ -181,12 +204,22 @@ export function KYCApp() {
         </Card>
 
 
-        {kycVerificationData.currentStep !== 'select' && kycVerificationData.currentStep !== 'complete' && (
-          <div className="mb-6">
-            <Button variant="outline" onClick={handleBack}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+        {kycVerificationData.currentStep !== 'complete' && (
+          <div className={`${kycVerificationData.currentStep == 'select' ? 'justify-end':"justify-between"} mb-6 flex`}>
+            {kycVerificationData.currentStep !== 'select' &&
+              <Button variant="outline" onClick={handleBack}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              }
+            {
+              kycVerificationData.currentStep !== kycVerificationData.lastStep && (
+                <Button variant="outline" onClick={handleNext}>
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  Next
+                </Button>
+              )
+            }
           </div>
         )}
 
@@ -202,10 +235,15 @@ export function KYCApp() {
           {kycVerificationData.currentStep === 'upload' && (
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold text-foreground">Upload Document</h2>
-                <p className="text-muted-foreground">
-                  Upload your {kycVerificationData.selectedDocumentType.toUpperCase()} document for verification
-                </p>
+                {
+                  kycVerificationData.filePreview ? "" :
+                    (<>
+                      <h2 className="text-2xl font-bold text-foreground">Upload Document</h2>
+                      <p className="text-muted-foreground">
+                        Upload your {kycVerificationData.selectedDocumentType.toUpperCase()} document for verification
+                      </p>
+                    </>)
+                }
               </div>
 
               <div className="max-w-md mx-auto">
@@ -223,14 +261,14 @@ export function KYCApp() {
           {kycVerificationData.currentStep === 'extract' && (
             <ExtractedFields
               documentType={kycVerificationData.selectedDocumentType}
-              data={extractedData}
               onVerify={handleExtractComplete}
               uploadedFile={uploadedFile || undefined}
             />
           )}
           {kycVerificationData.currentStep === 'face' && (
             <CameraCapture
-              idPhoto={uploadedFile.file}
+              // idPhoto={uploadedFile.file}
+              idPhoto={kycVerificationData.filePreview}
             />
           )}
 

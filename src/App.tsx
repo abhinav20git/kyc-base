@@ -16,7 +16,7 @@ import { UserContextProvider } from "./context/UserContext";
 import Profile from "./components/Profile";
 import { useToast } from "./hooks/use-toast";
 import KYCWebRTCSystem from "./components/Video-Kyc/KycWebRtcService";
-import { CurrentStepContextProvider, KYCVerificationContextProvider } from "./context/CurrentStepContext";
+import {KYCVerificationContextProvider } from "./context/CurrentStepContext";
 
 const queryClient = new QueryClient();
 
