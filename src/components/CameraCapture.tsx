@@ -5,7 +5,9 @@ import { FaceLivenessDetector } from "@aws-amplify/ui-react-liveness";
 import { Amplify } from "aws-amplify";
 import { Allow_Guest_Access, API_BASE, AWS_REGION, ComparisonResult, Identity_Pool_Id, LivenessResult } from "@/utils/constants";
 import axios from "axios";
-import './new.css'
+import './new.css';
+import { useKYCVerificationContext } from "@/context/CurrentStepContext";
+import { useNavigate } from "react-router-dom";
 
 const amplifyConfig = {
   Auth: {
@@ -18,14 +20,14 @@ const amplifyConfig = {
 Amplify.configure(amplifyConfig);
 
 export function CameraCapture({ idPhoto }) {
+  const {kycVerificationData, setKycVerificationData} = useKYCVerificationContext()
   const [message, setMessage] = useState("Loading...");
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [result, setResult] = useState<LivenessResult | null>(null);
-  const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
   const [isAmplifyReady, setIsAmplifyReady] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState({state: false, label: ""});
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // const API_BASE = "https://j4t7l04g-5000.inc1.devtunnels.ms";
   useEffect(() => {
@@ -48,10 +50,10 @@ export function CameraCapture({ idPhoto }) {
   }, [API_BASE]);
 
   const startLiveness = async () => {
-    setIsLoading(true);
+    setIsLoading({state:true, label: 'Initializing liveness checking session...'});
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/users/start-liveness`, {
+      const res = await fetch(`${API_BASE}/AI/start-liveness`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
@@ -63,22 +65,22 @@ export function CameraCapture({ idPhoto }) {
       const data = await res.json();
       console.log(data.data.SessionId)
       setSessionId(data.data.SessionId);
-      setResult(null);
+      setKycVerificationData({...kycVerificationData, livenessResult: null})
     } catch (e){
       console.log(e)
       setError("Failed to start liveness session.");
     } finally {
-      setIsLoading(false);
+      setIsLoading({label:'', state: false});
     }
   };
 
   const checkResult = async () => {
     console.log("entered")
     if (!sessionId) return;
-    setIsLoading(true);
+    setIsLoading({state:true, label: 'Checking liveness result...'});
     console.log("entered loading")
     try {
-      const res = await fetch(`${API_BASE}/users/liveness-result/${sessionId}`, {
+      const res = await fetch(`${API_BASE}/AI/liveness-result/${sessionId}`, {
         method: "GET",
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`,
@@ -88,39 +90,43 @@ export function CameraCapture({ idPhoto }) {
       console.log(res);
       const data = await res.json();
       console.log("Check result server res - ", data.data)
-      setResult(data.data);
+      // setResult(data.data);
+      setKycVerificationData({...kycVerificationData, livenessResult: data.data})
     } catch (e){
       console.log("entered loading 1", e)
       setError("Failed to fetch result.");
     } finally {
-      setIsLoading(false);
+      setIsLoading({state:false, label: ''});
     }
   };
 
   useEffect(() => {
-    if (result && result.Confidence >= 70) {
+    if (kycVerificationData.livenessResult && kycVerificationData.livenessResult.Confidence >= 75) {
+      console.log("confidence",kycVerificationData.faceData?.confidence)
       compareFaces();
     }
-  }, [result]);
+  }, [kycVerificationData.livenessResult]);
 
   const compareFaces = async () => {
-    const livenessImage = result?.ReferenceImage?.S3Object || result?.ReferenceImage?.Bytes;
+    const livenessImage = kycVerificationData.livenessResult?.ReferenceImage?.S3Object || kycVerificationData.livenessResult?.ReferenceImage?.Bytes;
     if (!livenessImage || !idPhoto) {
       setError("Need both liveness result and Id Photo");
       return;
     }
-    setIsLoading(true);
+    setIsLoading({state:true, label: 'Comparing facial data...'});
     try {
+      const response = await fetch(idPhoto);
+      const blob = await response.blob();
       const formData = new FormData();
-      formData.append('image', idPhoto);
-      if (result?.ReferenceImage?.S3Object) {
-        formData.append('s3Bucket', result.ReferenceImage.S3Object.Bucket);
-        formData.append('s3Key', result.ReferenceImage.S3Object.Name);
+      formData.append('image', blob);
+      if (kycVerificationData.livenessResult?.ReferenceImage?.S3Object) {
+        formData.append('s3Bucket', kycVerificationData.livenessResult.ReferenceImage.S3Object.Bucket);
+        formData.append('s3Key', kycVerificationData.livenessResult.ReferenceImage.S3Object.Name);
       } else {
-        formData.append('livenessImageBytes', result.ReferenceImage.Bytes);
+        formData.append('livenessImageBytes', kycVerificationData.livenessResult.ReferenceImage.Bytes);
       }
       const res = await axios.post(
-        `${API_BASE}/users/compare-faces`,
+        `${API_BASE}/AI/compare-faces`,
         formData,
         {
           headers: {
@@ -130,55 +136,56 @@ export function CameraCapture({ idPhoto }) {
         }
       );
       const data = res.data;
-      setComparisonResult(data.data);
+      // setComparisonResult(data.data);
+      setKycVerificationData({...kycVerificationData, faceData: data.data})
       console.log(data.data, "res")
       toast({
-        title: data.isMatch ? "✅ Match Found" : "❌ No Match",
-        description: data.isMatch
+        title: data.data.isMatch ? "✅ Match Found" : "❌ No Match",
+        description: data.data.isMatch
           ? "Your live photo matches your ID."
-          : `Similarity: ${data.confidence}% (Threshold: ${data.threshold}%)`
+          : `Similarity: ${data.data.confidence}% (Threshold: ${data.data.threshold}%)`
       });
     } catch (err) {
       toast({ title: "Error", description: err.message || "Something went wrong" });
     } finally {
-      setIsLoading(false);
+      setIsLoading({state:false, label: ''});
     }
   };
 
   useEffect(() => {
-    if (!sessionId) {
+    if (!kycVerificationData.livenessResult?.SessionId) {
       startLiveness();
     }
-  }, []);
+  }, [kycVerificationData.livenessResult]);
 
   return (
     <Card className="max-w-lg w-full mx-auto p-6 space-y-4 flex flex-col items-center justify-center text-center">
 
-      {(!sessionId || !isAmplifyReady) && <Loader label="Initializing Face Liveness Session..." />}
+      {/* {(!sessionId || !isAmplifyReady) && <Loader label="Initializing Face Liveness Session..." />} */}
 
-      {sessionId && isAmplifyReady && !result && (
+      {sessionId && isAmplifyReady && !kycVerificationData.livenessResult && (
         <div className="w-full flex flex-col items-center gap-3 overflow-hidden">
+          <p className="text-sm text-gray-500">Please position your face in the frame</p>
           <FaceLivenessDetector
             sessionId={sessionId}
             region={AWS_REGION}
             onAnalysisComplete={checkResult}
             onError={() => setError("Face detection failed. Try again with better lighting.")}
           />
-          <p className="text-sm text-gray-500">Please position your face in the frame</p>
         </div>
       )}
 
       {/* Liveness result */}
-      {result && (
+      {kycVerificationData.livenessResult && (
         <div className="w-full space-y-3">
           <p className="font-medium">
             Liveness Status:{" "}
-            <span className={result.Confidence >= 70 ? "text-green-600" : "text-red-600"}>
-              {result.Confidence >= 70 ? "Verified Human" : "Spoofing Suspected"}
+            <span className={kycVerificationData.livenessResult.Confidence >= 75 ? "text-green-600" : "text-red-600"}>
+              {kycVerificationData.livenessResult.Confidence >= 75 ? "Verified Human" : "Spoofing Suspected"}
             </span>
           </p>
 
-          {result.Confidence < 70 && (
+          {(kycVerificationData.livenessResult.Confidence < 75 || !kycVerificationData.faceData?.isMatch) && (
             <div className="space-y-2">
               <p className="text-sm text-gray-600">Not correct? You can:</p>
               <div className="flex gap-3 justify-center">
@@ -190,18 +197,20 @@ export function CameraCapture({ idPhoto }) {
         </div>
       )}
 
-      {result && isLoading && <Loader label="Comparing your live photo with ID..." />}
+      {isLoading.state && <Loader label={isLoading.label} />}
 
-      {comparisonResult && (
-        <div className={`p-3 rounded-md ${comparisonResult.isMatch ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+      {kycVerificationData.faceData && (
+        <div className={`p-3 rounded-md ${kycVerificationData.faceData.isMatch ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
           <h4 className="font-semibold">
-            {comparisonResult.isMatch ? "✅ MATCH VERIFIED" : "❌ NO MATCH"}
+            {kycVerificationData.faceData.isMatch ? "✅ MATCH VERIFIED" : "❌ NO MATCH"}
           </h4>
-          <p className="text-sm">Similarity: {Math.round(comparisonResult.confidence)}%</p>
-          <p className="text-sm">Threshold: {comparisonResult.threshold}%</p>
+          <p className="text-sm">Similarity: {Math.round(kycVerificationData.faceData.confidence)}%</p>
+          <p className="text-sm">Threshold: {kycVerificationData.faceData.threshold}%</p>
         </div>
       )}
-
+      {
+        kycVerificationData.faceData?.isMatch && <button onClick={()=>navigate('/video-kyc')}  className="px-6 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 text-sm">Move to Video KYC</button>
+      }
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </Card>
   );

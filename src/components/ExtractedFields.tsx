@@ -8,14 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { useEffect, useState } from 'react';
 import { UploadedFile } from '@/utils/constants';
+import { useKYCVerificationContext } from '@/context/CurrentStepContext';
 
-interface ExtractedData {
+export interface ExtractedData {
   [key: string]: string;
 }
 
 interface ExtractedFieldsProps {
   documentType: DocumentType;
-  data: ExtractedData;
   onVerify: () => void;
   uploadedFile: UploadedFile
 }
@@ -36,32 +36,31 @@ const fieldLabels: Record<DocumentType, Record<string, string>> = {
   },
   passport: {
     'Passport Number': 'A1234567',
-    'Full Name': 'RAJESH KUMAR SHARMA' ,
+    'Full Name': 'RAJESH KUMAR SHARMA',
     'Date of Birth': '15/06/1985',
     'Place of Birth': 'NEW DELHI',
     'Nationality': 'INDIAN'
   }
 };
 
-export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: ExtractedFieldsProps) {
+export function ExtractedFields({ documentType, onVerify, uploadedFile }: ExtractedFieldsProps) {
   const { toast } = useToast();
-  
-  const [extractedData, setExtractedData] = useState<ExtractedData>(
-    data || {}
-  );
+  const {kycVerificationData, setKycVerificationData} = useKYCVerificationContext()
+  const [extractedData, setExtractedData] = useState<ExtractedData>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentField, setCurrentField] = useState<string>('');
   const [currentValue, setCurrentValue] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [currentFieldLabel, setCurrentFieldLabel] = useState<string>('');
   useEffect(() => {
-    if (data && Object.keys(data).length > 0) {
-      setExtractedData(data);
+    if (kycVerificationData.extractedData && Object.keys(kycVerificationData.extractedData).length > 0) {
+      setExtractedData(kycVerificationData.extractedData);
+      console.log("extracted data: ", kycVerificationData.extractedData)
       setLoading(false);
     }
-  }, [data]);
+  }, [kycVerificationData.extractedData]);
 
-  
+
   if (loading) {
     return (
       <div className="space-y-6 flex flex-col">
@@ -108,17 +107,17 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
   };
 
   const openEditDialog = (field: string, label: string, value: string) => {
-  setCurrentField(field);       
-  setCurrentFieldLabel(label);   
-  setCurrentValue(value);
-  setIsDialogOpen(true);
-};
+    setCurrentField(field);
+    setCurrentFieldLabel(label);
+    setCurrentValue(value);
+    setIsDialogOpen(true);
+  };
 
   const saveEditedValue = () => {
     setExtractedData(prev => ({
       ...prev,
       [currentField]: currentValue
-      
+
     }));
     setIsDialogOpen(false);
     toast({
@@ -161,46 +160,46 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
         </div>
       </div>
       {
-        uploadedFile.file?.type.startsWith('image/') &&
-         <img src={uploadedFile.preview} alt="" width={'420px'} height={"320px"} 
-         className='self-center rounded border-2 border-blue-500' />
+        kycVerificationData.filePreview &&
+        <img src={kycVerificationData.filePreview} alt="" width={'420px'} height={"320px"}
+          className='self-center rounded border-2 border-blue-500' />
       }
-     
+
       <Card className="bg-gradient-to-br from-card to-secondary/20 border">
         <div className="p-6 gap-4 grid grid-cols-1 md:grid-cols-2 items-center">
           {Object.entries(extractedData).map(([field, value], i, data) => {
-  const label = fieldLabels[documentType]?.[field] || field; 
-  return (
-    <div
-      key={field}
-      className={`h-21 flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow ${i % 2 == 0 && i + 1 == data.length ? 'md:col-span-2' : ''}`}
-    >
-      <div className="space-y-1 flex-1">
-        <Badge variant="outline" className="text-xs">
-          {label}
-        </Badge>
-        <p className="font-medium text-card-foreground">{value}</p>
-      </div>
+            const label = fieldLabels[documentType]?.[field] || field;
+            return (
+              <div
+                key={field}
+                className={`h-21 flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow ${i % 2 == 0 && i + 1 == data.length ? 'md:col-span-2' : ''}`}
+              >
+                <div className="space-y-1 flex-1">
+                  <Badge variant="outline" className="text-xs">
+                    {label}
+                  </Badge>
+                  <p className="font-medium text-card-foreground">{value}</p>
+                </div>
 
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => copyToClipboard(value)}
-        >
-          <Copy className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => openEditDialog(field,label, value)} 
-        >
-          <Pencil className="w-4 h-4" />
-        </Button>
-      </div>
-    </div>
-  );
-})}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(value)}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEditDialog(field, label, value)}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
 
         </div>
       </Card>
@@ -211,7 +210,7 @@ export function ExtractedFields({ documentType, data, onVerify, uploadedFile }: 
           onClick={onVerify}
           className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 px-8"
         >
-          
+
           Capture Face
         </Button>
       </div>
