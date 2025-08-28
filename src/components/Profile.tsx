@@ -283,26 +283,32 @@ export default function ProfilePage() {
             </div>
             <div className="p-4 sm:p-6 space-y-3 text-sm text-gray-700">
               {user.KYCSessions && user.KYCSessions.length > 0 ? (
-                user.KYCSessions.map((session: any, index: number) => (
-                  <div
-                    key={session.id || index}
-                    className="flex justify-between items-center border-b pb-2"
-                  >
-                    <span>{session.EPIC1?.predicted || "Unknown Document"}</span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        session.session_status === "verified"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {session.session_status}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500">No documents uploaded yet.</p>
-              )}
+  user.KYCSessions
+    .filter(
+      (session: any) =>
+        session.session_status === "verified" ||
+        session.session_status === "pending"
+    )
+    .map((session: any, index: number) => (
+      <div
+        key={session.id || index}
+        className="flex justify-between items-center border-b pb-2"
+      >
+        <span>{session.EPIC1?.predicted || "Unknown Document"}</span>
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${
+            session.session_status === "verified"
+              ? "bg-green-100 text-green-700"
+              : "bg-yellow-100 text-yellow-700"
+          }`}
+        >
+          {session.session_status}
+        </span>
+      </div>
+    ))
+) : (
+  <p className="text-gray-500">No documents uploaded yet.</p>
+)}
             </div>
           </div>
         </div>

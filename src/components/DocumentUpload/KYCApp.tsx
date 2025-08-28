@@ -265,7 +265,7 @@ const handleFileUpload = async (file: File, type: DocumentType) => {
             </Card>
           )}
         </div>
-        <ChatbotWidget/>
+        {/* <ChatbotWidget/> */}
       </div>
       
     </div>

@@ -18,6 +18,7 @@ import Profile from "./components/Profile";
 import { useToast } from "./hooks/use-toast";
 import ComplianceDashboard from './components/ComplianceDashboard'
 import KYCWebRTCSystem from "./components/Video-Kyc/KycWebRtcService";
+import ChatbotWidget from "./components/ChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
                 {/* <Route path="*" element={<NotFound />} /> */}
               </Routes>
             </main>
+            <ChatbotWidget/>
             <Footer />
           </div>
         </BrowserRouter>

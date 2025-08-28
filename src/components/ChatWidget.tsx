@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
 import ChatIcon from "../images/chat-bot-icon-design-robot-600nw-2476207303.jpg.webp";
+import io , {Socket} from "socket.io-client";
 import { FiUpload } from "react-icons/fi";
 import axios from "axios";
 import { API_BASE } from "@/utils/constants";
+import { BotMessageSquare } from 'lucide-react';
+
+let socket: Socket;
+
 
 export default function ChatbotWidget() {
   const [open, setOpen] = useState(false);
@@ -12,6 +17,7 @@ export default function ChatbotWidget() {
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [initialized, setInitialized] = useState(false);
+
 
   // initialize chat session
   const initializeChat = async () => {
@@ -63,6 +69,43 @@ const sendMessage = async () => {
     console.error("Error sending message:", err);
   }
 };
+
+const sendFile = async () => {
+  if (!file) return;
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const formData = new FormData();
+    formData.append("image",file); // 👈 sending the file
+
+    const res = await axios.post(
+      `${API_BASE}/AI/process-document`, // <-- change endpoint if different
+      formData,
+      {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data", // 👈 must be multipart
+        },
+      }
+    );
+
+    console.log("File upload response:", res.data);
+
+    // Add to chat messages
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: `📎 Uploaded: ${file.name}` },
+      { sender: "bot", text: res.data.data?.response || "File received!" },
+    ]);
+
+    // Reset file state
+    setFile(null);
+  } catch (err) {
+    console.error("Error uploading file:", err);
+  }
+};
 const getMessage = async () => {
   try {
     const token = localStorage.getItem("token");
@@ -96,7 +139,7 @@ const getMessage = async () => {
           initializeChat();
         }}
       >
-        <img src={ChatIcon} alt="Chat Icon" className="w-8 h-8" />
+        <BotMessageSquare className="w-8 h-8" />
       </button>
 
       {/* Chat window */}
@@ -163,11 +206,19 @@ const getMessage = async () => {
           </div>
 
           {/* Show selected file name */}
-          {file && (
-            <div className="text-xs text-gray-600 px-3 pb-2">
-              Selected: <span className="font-medium">{file.name}</span>
-            </div>
-          )}
+         {file && (
+  <div className="flex items-center justify-between px-3 pb-2">
+    <span className="text-xs text-gray-600">
+      Selected: <span className="font-medium">{file.name}</span>
+    </span>
+    <button
+      onClick={sendFile}
+      className="bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition text-sm"
+    >
+      Upload
+    </button>
+  </div>
+)}
         </div>
       )}
     </div>
