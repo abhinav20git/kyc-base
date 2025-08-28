@@ -17,6 +17,7 @@ import {
   Globe,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ChatWidget from '../../components/ChatWidget'
  
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -359,7 +360,11 @@ export const KYCWorkflow: React.FC = () => {
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
+          
         </section>
+        {/* <ChatWidget/> */}
+        
+        
       </div>
     </QueryClientProvider>
   );

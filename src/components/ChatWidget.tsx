@@ -1,46 +1,145 @@
-// ChatbotWidget.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ChatIcon from "../images/chat-bot-icon-design-robot-600nw-2476207303.jpg.webp";
+import io , {Socket} from "socket.io-client";
 import { FiUpload } from "react-icons/fi";
+import axios from "axios";
+import { API_BASE } from "@/utils/constants";
+import { BotMessageSquare } from 'lucide-react';
+
+let socket: Socket;
+
 
 export default function ChatbotWidget() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
+  const [messages, setMessages] = useState<{ sender: string; text: string }[]>(
+    []
+  );
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
-  const sendMessage = async () => {
-    if (!input.trim() && !file) return;
 
-    const userMessage = { sender: "user", text: input || (file ? `📎 Uploaded file: ${file.name}` : "") };
-    setMessages([...messages, userMessage]);
-
-    // Build form data (for file upload + text)
-    const formData = new FormData();
-    formData.append("query", input);
-    if (file) {
-      formData.append("file", file);
+  // initialize chat session
+  const initializeChat = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await axios.get(`${API_BASE}/c/initialize`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          Authorization: `Bearer ${token}`,
+          
+        },
+      });
+      console.log("initialize data",res.data);
+      setInitialized(true);
+    } catch (err) {
+      console.error("Initialization failed:", err);
     }
-
-    const res = await fetch("", {
-      method: "POST",
-      body: formData, // no headers, fetch handles FormData
-    });
-    const data = await res.json();
-
-    setMessages((prev) => [...prev, { sender: "bot", text: data.reply }]);
-    setInput("");
-    setFile(null);
   };
+  
+
+const sendMessage = async () => {
+  if (!input.trim()) return;
+
+  const userMessage = { sender: "user", text: input };
+  setMessages((prev) => [...prev, userMessage]);
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.post(
+      `${API_BASE}/c/message`,
+      { message: input }, // ✅ send JSON body
+      {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json", // ✅ explicitly JSON
+        },
+      }
+    );
+    console.log("Message response:", res.data);
+
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: res.data.data?.response || "No reply" },
+    ]);
+    setInput("");
+  } catch (err) {
+    console.error("Error sending message:", err);
+  }
+};
+
+const sendFile = async () => {
+  if (!file) return;
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const formData = new FormData();
+    formData.append("image",file); // 👈 sending the file
+
+    const res = await axios.post(
+      `${API_BASE}/AI/process-document`, // <-- change endpoint if different
+      formData,
+      {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data", // 👈 must be multipart
+        },
+      }
+    );
+
+    console.log("File upload response:", res.data);
+
+    // Add to chat messages
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: `📎 Uploaded: ${file.name}` },
+      { sender: "bot", text: res.data.data?.response || "File received!" },
+    ]);
+
+    // Reset file state
+    setFile(null);
+  } catch (err) {
+    console.error("Error uploading file:", err);
+  }
+};
+const getMessage = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get(
+      `${API_BASE}/c/history`,
+       // ✅ empty body
+      {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Message response history:", res.data);
+
+  } catch (err) {
+    console.error("Error sending message:", err);
+  }
+};
 
   return (
     <div>
       {/* Floating chat icon */}
       <button
         className="fixed bottom-6 right-6 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform"
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          setOpen(!open);
+          initializeChat();
+        }}
       >
-        <img src={ChatIcon} alt="Chat Icon" className="w-8 h-8" />
+        <BotMessageSquare className="w-8 h-8" />
       </button>
 
       {/* Chat window */}
@@ -52,7 +151,9 @@ export default function ChatbotWidget() {
           {/* Header */}
           <div className="p-3 border-b font-bold bg-blue-500 text-white rounded-t-2xl flex justify-between">
             <span>AI-KYC Assistant</span>
-            <button onClick={() => setOpen(false)} className="font-bold">×</button>
+            <button onClick={() => setOpen(false)} className="font-bold">
+              ×
+            </button>
           </div>
 
           {/* Messages */}
@@ -60,7 +161,9 @@ export default function ChatbotWidget() {
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  m.sender === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <p
                   className={`px-3 py-2 rounded-xl max-w-[75%] text-sm animate-fadeIn ${
@@ -77,8 +180,6 @@ export default function ChatbotWidget() {
 
           {/* Input & File Upload */}
           <div className="flex items-center gap-2 p-2 border-t bg-white rounded-b-2xl">
-            
-
             <input
               className="flex-1 border p-2 rounded-lg text-sm"
               value={input}
@@ -93,6 +194,7 @@ export default function ChatbotWidget() {
             >
               Send
             </button>
+            {/* <button className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition" onClick={getMessage}  >History</button> */}
             <label className="cursor-pointer bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-lg text-sm">
               <FiUpload className="inline-block m-1" />
               <input
@@ -104,33 +206,21 @@ export default function ChatbotWidget() {
           </div>
 
           {/* Show selected file name */}
-          {file && (
-            <div className="text-xs text-gray-600 px-3 pb-2">
-              Selected: <span className="font-medium">{file.name}</span>
-            </div>
-          )}
+         {file && (
+  <div className="flex items-center justify-between px-3 pb-2">
+    <span className="text-xs text-gray-600">
+      Selected: <span className="font-medium">{file.name}</span>
+    </span>
+    <button
+      onClick={sendFile}
+      className="bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition text-sm"
+    >
+      Upload
+    </button>
+  </div>
+)}
         </div>
       )}
-
-      {/* Animations */}
-      <style>
-        {`
-          @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-          }
-          .animate-slideUp {
-            animation: slideUp 0.3s ease-out;
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-          }
-          .animate-fadeIn {
-            animation: fadeIn 0.25s ease-in;
-          }
-        `}
-      </style>
     </div>
   );
 }
