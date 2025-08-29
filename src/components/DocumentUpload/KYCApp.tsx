@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Shield, ArrowLeft, CheckCircle, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { UploadedFile } from '@/utils/constants';
+import { API_BASE, UploadedFile } from '@/utils/constants';
 import { CameraCapture } from '../CameraCapture';
 import ChatbotWidget from '../ChatWidget';
 import { uploadDocument } from '@/api/upload';
 import { ExtractedFields } from '../ExtractedFields';
 import { CurrentStep, useKYCVerificationContext } from '@/context/CurrentStepContext';
+import { Amplify } from 'aws-amplify';
+import axios from 'axios';
+
 
 // type Step = 'select' | 'upload' | 'extract' | 'face' | 'complete';
 

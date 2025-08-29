@@ -19,7 +19,7 @@ export type UploadedFile = {
 }
 
 // API Configuration
-export const API_BASE = "https://9b2628acdc92.ngrok-free.app/api/v1";
+export const API_BASE = "https://a519e2f569b2.ngrok-free.app/api/v1";
 
 // Auth Routes
 export const AUTH_REGISTER = `${API_BASE}/users/register`;

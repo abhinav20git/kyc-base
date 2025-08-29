@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom"; // ⬅️ added useLocation
-import { Menu, Shield, X, LogOut, User } from "lucide-react";
+import { Menu, Shield, X, LogOut, User, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logoutUser } from "@/api/auth";
 import { useToast } from "@/hooks/use-toast";
 
-const Header = () => {
+const Header = ({isDarkTheme}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -72,9 +72,9 @@ const Header = () => {
 
   
   const isActive = (path: string) => location.pathname === path;
-
+  
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
+    <header className={`sticky top-0 z-40 w-full border-b ${isDarkTheme? 'bg-zinc-900 border-zinc-700':'bg-background/80'} backdrop-blur`}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link
@@ -82,13 +82,13 @@ const Header = () => {
           className="flex items-center space-x-3 hover:opacity-90 transition-opacity"
         >
           <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
+            {isDarkTheme ? <Bot className="h-5 w-5 text-primary-foreground" /> : <Shield className="w-5 h-5 text-white" />}
           </div>
           <div>
             <h1 className="md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Asmadiya Technologies
             </h1>
-            <p className="text-sm text-gray-600">KYC Document Verification</p>
+            <p className={`text-sm ${isDarkTheme? 'text-gray-400':'text-gray-600'}`}>KYC Document Verification {isDarkTheme && 'with AI Assistant'}</p>
           </div>
         </Link>
 
@@ -97,22 +97,22 @@ const Header = () => {
           {token ? (
             <div className="flex items-center gap-4">
               {user && (
-                <span className="text-sm text-gray-600">
+                <span className={`text-sm ${isDarkTheme? 'text-gray-300' :'text-gray-600'}`}>
                   Welcome, {user.name}
                 </span>
               )}
 
               {/* Start KYC button */}
-              <Button
+              {!isDarkTheme && <Button
                 asChild
                 size="sm"
                 variant={isActive("/kyc-verification") ? "default" : "outline"}
               >
                 <Link to="/kyc-verification">Start KYC</Link>
-              </Button>
+              </Button>}
 
               {/* Profile button */}
-              <Button
+              {!isDarkTheme && <Button
                 asChild
                 size="sm"
                 variant={isActive("/profile") ? "default" : "outline"}
@@ -121,11 +121,11 @@ const Header = () => {
                   <User className="w-4 h-4 mr-2" />
                   Profile
                 </Link>
-              </Button>
+              </Button>}
 
               {/* Logout */}
-              <Button size="sm" variant="ghost" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
+              <Button size="sm" variant="ghost" className={`${isDarkTheme? 'bg-zinc-900 text-white hover:bg-zinc-700':''}`} onClick={handleLogout}>
+                <LogOut className={`w-4 h-4 mr-2`} />
                 Logout
               </Button>
             </div>

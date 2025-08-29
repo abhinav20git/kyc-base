@@ -20,7 +20,7 @@ interface ExtractedFieldsProps {
   uploadedFile: UploadedFile
 }
 
-const fieldLabels: Record<DocumentType, Record<string, string>> = {
+export const fieldLabels: Record<DocumentType, Record<string, string>> = {
   pan: {
     pan_number: "PAN Number",
     name: "Full Name",
