@@ -14,33 +14,33 @@ import { fieldLabels } from "@/components/ExtractedFields";
 import { Amplify } from "aws-amplify";
 import { FaceLivenessDetector } from "@aws-amplify/ui-react-liveness";
 import { useNavigate } from "react-router-dom";
-
+ 
 interface ChatInputProps {
     onSendMessage: (message: string, file: File) => void;
     disabled?: boolean;
     fileInputRef: any
 }
-
+ 
 interface ChatMessageProps {
     message: string;
     isUser: boolean;
     timestamp?: Date;
     fileName?: String;
 }
-
+ 
 interface Message {
     id: string;
-    text: string | React.ReactNode;
+    text: string;
     isUser: boolean;
     timestamp: Date;
     fileName?: String;
     buttons?: String[]
 }
-
+ 
 const KycWithAIAgent = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { kycVerificationData, setKycVerificationData } = useKYCVerificationContext()
-
+ 
     const getStoredMessages = (): Message[] => {
         try {
             const stored = localStorage.getItem("messages");
@@ -49,29 +49,29 @@ const KycWithAIAgent = () => {
             return [];
         }
     };
-
+ 
     const [messages, setMessages] = useState<Message[]>(getStoredMessages());
-
-
+ 
+ 
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
-
+ 
     const [startLivenessSession, setStartLivenessSession] = useState(false);
-
+ 
     useEffect(() => {
         scrollToBottom();
         localStorage.setItem("messages", JSON.stringify(messages))
     }, [messages]);
-
-    useEffect(()=>{
-        if(startLivenessSession){
+ 
+    useEffect(() => {
+        if (startLivenessSession) {
             scrollToBottom();
         }
-    },[startLivenessSession])
-
+    }, [startLivenessSession,])
+ 
     const handleSendMessage = async (text: string, file?: File) => {
         const userMessage: Message = {
             id: Date.now().toString(),
@@ -82,7 +82,7 @@ const KycWithAIAgent = () => {
         };
         setMessages(prev => [...prev, userMessage]);
         // setIsTyping(true);
-
+ 
     };
     const documentButtons = ["aadhaar", "passport", "pan"]
     const [isInitialized, setIsInitialized] = useState(JSON.parse(localStorage.getItem("isInitialized")) || false)
@@ -104,11 +104,11 @@ const KycWithAIAgent = () => {
             localStorage.setItem("isInitialized", JSON.stringify(true))
         }
     }, [isInitialized])
-
-    
+ 
+ 
     const handleUserButtonClick = (button: any) => {
         if (documentButtons.includes(button)) {
-            setKycVerificationData({ ...kycVerificationData, selectedDocumentType: button, filePreview: null, currentStep: CurrentStep.Extract, lastStep: CurrentStep.Extract });
+            setKycVerificationData({ ...kycVerificationData, selectedDocumentType: button, filePreview: null, currentStep: CurrentStep.Upload, lastStep: CurrentStep.Upload });
             handleSendMessage(button);
             const message: Message = {
                 id: String(messages.length + 1),
@@ -120,33 +120,50 @@ const KycWithAIAgent = () => {
             setMessages((prev) => [...prev, message])
         } else if (button == "upload") {
             fileInputRef.current?.click();
-            setKycVerificationData({...kycVerificationData, currentStep: CurrentStep.Upload, lastStep: CurrentStep.Upload})
         } else if (button == "Start liveness Session") {
             setStartLivenessSession(true)
         }
     }
-
+ 
+    useEffect(() => {
+        if(startLivenessSession && messages[messages.length-1].text != "✅ MATCH VERIFIED" && messages[messages.length-1].text != "❌ NO MATCH"){
+            const message: Message = {
+            id: String(messages.length + 1),
+            text: String(kycVerificationData.faceData?.isMatch ? "✅ MATCH VERIFIED" : "❌ NO MATCH"),
+            timestamp: new Date(),
+            isUser: false,
+            buttons: kycVerificationData.faceData?.isMatch ? null : ["Try Again"]
+        }
+        setMessages((prev) => [...prev, message])
+        }
+    }, [kycVerificationData.faceData ])
+ 
     return (
         <div className="flex flex-col bg-chat-background bg-zinc-900 h-[calc(100vh-110px)]">
-
+ 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 border-0 scrollbar-hide">
                 {messages.map((message) => (
-                    <div className="md:px-16">
-                        <ChatMessage
-                            key={message.id}
-                            message={message.text}
-                            isUser={message.isUser}
-                            timestamp={message.timestamp}
-                            fileName={message.fileName}
-                        />
-                        {message.buttons &&
-                            message.buttons.map((button, i) => (<button className="bg-white mr-2 px-6 py-2 rounded-full font-bold capitalize shadow-md shadow-blue-400 mb-2" key={i} onClick={() => handleUserButtonClick(button)}>{button}</button>))
-                        }
-                    </div>
-
-                ))}
-
+  <div key={message.id} className="md:px-16">
+    <ChatMessage
+      message={message.text}
+      isUser={message.isUser}
+      timestamp={message.timestamp}
+      fileName={message.fileName}
+    />
+    {message.buttons &&
+      message.buttons.map((button) => (
+        <button
+          key={`${message.id}-${button}`} // unique key per button
+          className="bg-white mr-2 px-6 py-2 rounded-full font-bold capitalize shadow-md shadow-blue-400 mb-2"
+          onClick={() => handleUserButtonClick(button)}
+        >
+          {button}
+        </button>
+      ))}
+  </div>
+))}
+ 
                 {isTyping && (
                     <div className="flex justify-start">
                         <div className="flex items-center space-x-2 bg-chat-assistant-bubble rounded-2xl rounded-bl-md px-4 py-3">
@@ -162,18 +179,18 @@ const KycWithAIAgent = () => {
                 {startLivenessSession && <LivenessSession />}
                 <div ref={messagesEndRef} />
             </div>
-
+ 
             {/* Input */}
             <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} fileInputRef={fileInputRef} messages={messages} setMessages={setMessages} />
         </div>
     );
 }
-
+ 
 export const ChatInput = ({ onSendMessage, disabled, fileInputRef, messages, setMessages }) => {
     const [message, setMessage] = useState("");
     const [file, setFile] = useState<File>(null);
     const { kycVerificationData, setKycVerificationData } = useKYCVerificationContext()
-
+ 
     const handleSend = () => {
         if (message.trim() || file) {
             onSendMessage(message.trim(), file);
@@ -181,24 +198,24 @@ export const ChatInput = ({ onSendMessage, disabled, fileInputRef, messages, set
             setFile(null);
         }
     };
-
+ 
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSend();
         }
     };
-
+ 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length) {
             setFile(e.target.files[0])
         }
     };
-
+ 
     const removeFile = () => {
         setFile(null)
     };
-
+ 
     useEffect(() => {
         (async function () {
             try {
@@ -244,11 +261,7 @@ export const ChatInput = ({ onSendMessage, disabled, fileInputRef, messages, set
             }
         })()
     }, [file])
-
-    useEffect(() => {
-
-    }, [kycVerificationData.filePreview])
-
+ 
     return (
         <div className="border-t border-zinc-700 bg-chat-surface px-4 py-2">
             {file && (<div className="flex items-center space-x-2 bg-chat-hover rounded-lg px-3 py-2">
@@ -263,7 +276,7 @@ export const ChatInput = ({ onSendMessage, disabled, fileInputRef, messages, set
                 </Button>
             </div>
             )}
-
+ 
             {/* <div className="flex items-end space-x-3"> */}
             <div className="flex-1 relative md:px-16">
                 <textarea
@@ -284,7 +297,7 @@ export const ChatInput = ({ onSendMessage, disabled, fileInputRef, messages, set
                     >
                         <Paperclip className="h-4 w-4 text-sky-50" />
                     </Button>
-
+ 
                     <Button
                         onClick={handleSend}
                         disabled={disabled || (!message.trim() && !file)}
@@ -309,8 +322,8 @@ export const ChatInput = ({ onSendMessage, disabled, fileInputRef, messages, set
         </div>
     );
 };
-
-
+ 
+ 
 export const ChatMessage = ({ message, isUser, timestamp, fileName }: ChatMessageProps) => {
     timestamp = new Date(timestamp);
     return (
@@ -339,9 +352,9 @@ export const ChatMessage = ({ message, isUser, timestamp, fileName }: ChatMessag
         </div>
     );
 };
-
+ 
 export default KycWithAIAgent
-
+ 
 const amplifyConfig = {
     Auth: {
         Cognito: {
@@ -351,7 +364,7 @@ const amplifyConfig = {
     },
 };
 Amplify.configure(amplifyConfig);
-
+ 
 const LivenessSession = () => {
     const { kycVerificationData, setKycVerificationData } = useKYCVerificationContext();
     const [sessionId, setSessionId] = useState<string | null>(null);
@@ -385,7 +398,7 @@ const LivenessSession = () => {
             const data = await res.json();
             console.log(data.data.SessionId)
             setSessionId(data.data.SessionId);
-            setKycVerificationData({ ...kycVerificationData, livenessResult: null })
+            setKycVerificationData({ ...kycVerificationData, livenessResult: null, lastStep: CurrentStep.Face, currentStep: CurrentStep.Face })
         } catch (e) {
             console.log(e)
             setError("Failed to start liveness session.");
@@ -476,54 +489,55 @@ const LivenessSession = () => {
     const navigate = useNavigate();
     return (
         // <div className=" bg-[#34343400] backdrop-blur-sm absolute w-screen z-30 top-16 left-0 text-black h-[calc(100vh-4rem)] p-4 flex justify-center items-center">
-            <div className="bg-white w-full max-h-full max-w-md mx-auto overflow-hidden flex flex-col items-center gap-2">
-                {sessionId && isAmplifyReady && !kycVerificationData.livenessResult && (
-                    <div className="w-full flex flex-col items-center gap-3 overflow-hidden">
-                        <p className="text-sm text-gray-500">Please position your face in the frame</p>
-                        <FaceLivenessDetector
-                            sessionId={sessionId}
-                            region={AWS_REGION}
-                            onAnalysisComplete={checkResult}
-                            onError={() => setError("Face detection failed. Try again with better lighting.")}
-                        />
-                    </div>
-                )}
-                {kycVerificationData.livenessResult && (
-                    <div className="w-full space-y-3">
-                        <p className="font-medium text-center">
-                            Liveness Status:{" "}
-                            <span className={kycVerificationData.livenessResult.Confidence >= 75 ? "text-green-600" : "text-red-600"}>
-                                {kycVerificationData.livenessResult.Confidence >= 75 ? "Verified Human" : "Spoofing Suspected"}
-                            </span>
-                        </p>
-
-                        {(kycVerificationData.livenessResult.Confidence < 75 || !kycVerificationData.faceData?.isMatch) && (
-                            <div className="space-y-2">
-                                <p className="text-sm text-gray-600">Not correct? You can:</p>
-                                <div className="flex gap-3 justify-center">
-                                    <button className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm">Report</button>
-                                    <button onClick={startLiveness} className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 text-sm">Try Again</button>
-                                </div>
+        <div className="w-full max-h-full max-w-md mx-auto overflow-hidden flex flex-col items-center gap-2 bg-zinc-900 text-white">
+            {sessionId && isAmplifyReady && !kycVerificationData.livenessResult && (
+                <div className="w-full flex flex-col items-center gap-3 overflow-hidden">
+                    <p className="text-sm text-gray-500">Please position your face in the frame</p>
+                    <FaceLivenessDetector
+                        sessionId={sessionId}
+                        region={AWS_REGION}
+                        onAnalysisComplete={checkResult}
+                        onError={() => setError("Face detection failed. Try again with better lighting.")}
+                    />
+                </div>
+            )}
+            {kycVerificationData.livenessResult && (
+                <div className="w-full space-y-3">
+                    <p className="font-medium text-center text-white">
+                        Liveness Status:{" "}
+                        <span className={kycVerificationData.livenessResult.Confidence >= 75 ? "text-green-600" : "text-red-600"}>
+                            {kycVerificationData.livenessResult.Confidence >= 75 ? "Verified Human" : "Spoofing Suspected"}
+                        </span>
+                    </p>
+ 
+                    {(kycVerificationData.livenessResult.Confidence < 75 || !kycVerificationData.faceData?.isMatch) && (
+                        <div className="space-y-2">
+                            <p className="text-sm text-gray-600">Not correct? You can:</p>
+                            <div className="flex gap-3 justify-center">
+                                <button className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-800 text-sm">Report</button>
+                                <button onClick={startLiveness} className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 text-sm">Try Again</button>
                             </div>
-                        )}
-                    </div>
-                )}
-                {isLoading.state && <Loader label={isLoading.label} />}
-
-                {kycVerificationData.faceData && (
-                    <div className={`p-3 rounded-md ${kycVerificationData.faceData.isMatch ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        <h4 className="font-semibold">
-                            {kycVerificationData.faceData.isMatch ? "✅ MATCH VERIFIED" : "❌ NO MATCH"}
-                        </h4>
-                        <p className="text-sm">Similarity: {Math.round(kycVerificationData.faceData.confidence)}%</p>
-                        <p className="text-sm">Threshold: {kycVerificationData.faceData.threshold}%</p>
-                    </div>
-                )}
-                {
-                    kycVerificationData.faceData?.isMatch && <button onClick={() => navigate('/video-kyc')} className="px-6 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 text-sm">Move to Video KYC</button>
-                }
-                {error && <p className="text-red-500 text-sm">{error}</p>}
-            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+            {isLoading.state && <Loader label={isLoading.label} />}
+ 
+            {kycVerificationData.faceData && (
+                <div className={`p-3 rounded-md ${kycVerificationData.faceData.isMatch ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    <h4 className="font-semibold">
+                        {kycVerificationData.faceData.isMatch ? "✅ MATCH VERIFIED" : "❌ NO MATCH"}
+                    </h4>
+                    <p className="text-sm">Similarity: {Math.round(kycVerificationData.faceData.confidence)}%</p>
+                    <p className="text-sm">Threshold: {kycVerificationData.faceData.threshold}%</p>
+                </div>
+            )}
+            {
+                kycVerificationData.faceData?.isMatch && <button onClick={() => navigate('/video-kyc')} className="px-6 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 text-sm">Move to Video KYC</button>
+            }
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+        </div>
         // </div>
     )
 }
+ 
