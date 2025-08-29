@@ -162,12 +162,24 @@ const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
 </div>
 
                   {/* Selection Prompt */}
-                  <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-white/50">
+                  <div
+                    className={`mt-4 sm:mt-6 pt-3 sm:pt-4 border-t ${
+                      method.id === "agent"
+                        ? "border-gray-500"
+                        : "border-black/30"
+                    }`}
+                  >
                     <div className="flex items-center justify-center">
-                      <div className={`px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r ${method.gradient} text-white rounded-lg font-medium text-xs sm:text-sm hover:opacity-90 transition-opacity ${
-                        selectedMethod === method.id ? 'opacity-75' : ''
-                      }`}>
-                        {selectedMethod === method.id ? 'Selected!' : `Select ${method.title}`}
+                      <div
+                        className={`px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r ${
+                          method.gradient
+                        } text-white rounded-lg font-medium text-xs sm:text-sm hover:opacity-90 transition-opacity ${
+                          selectedMethod === method.id ? "opacity-75" : ""
+                        }`}
+                      >
+                        {selectedMethod === method.id
+                          ? "Selected!"
+                          : `Select ${method.title}`}
                       </div>
                     </div>
                   </div>

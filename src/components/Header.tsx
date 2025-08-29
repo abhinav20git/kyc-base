@@ -540,6 +540,11 @@ const Header = ({ isDarkTheme }) => {
           </nav>
         )}
       </div>
+      <KYCMethodModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSelect={handleKYCMethodSelect}
+        />
     </header>
   );
 };
