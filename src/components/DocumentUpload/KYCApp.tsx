@@ -135,10 +135,10 @@ export function KYCApp() {
 
   const getProgressValue = () => {
     switch (kycVerificationData.currentStep) {
-      case 'select': return 20;
-      case 'upload': return 40;
-      case 'extract': return 60;
-      case 'face': return 80;
+      case 'select': return 0;
+      case 'upload': return 30;
+      case 'extract': return 50;
+      case 'face': return 70;
       case 'complete': return 100;
       default: return 0;
     }
