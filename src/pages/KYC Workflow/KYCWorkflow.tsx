@@ -194,7 +194,7 @@ export const KYCWorkflow = () => {
     // For demonstration - replace with actual navigation
     if (method === 'agent') {
       toast.success('Navigating to Agent-Assisted KYC');
-      navigate('/kyc-agent');
+      navigate('/kyc-with-ai-agent');
     } else {
       
       toast.success('Navigating to Self-Service KYC');
