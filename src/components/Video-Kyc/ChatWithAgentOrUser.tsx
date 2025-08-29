@@ -7,7 +7,7 @@ const ChatWithAgentOrUser = ({ socket, roomId, userId, agentId, role, startKyc }
   const [currentMessage, setCurrentMessage] = useState(role == "customer" ? "start" : "Are you ready to start the kyc")
 
   const sendMessage = () => {
-    // socket.emit(`${role}:message`, { message: currentMessage, to: role == "agent" ? userId : agentId });
+    socket.emit(`${role}:message`, { message: currentMessage, to: role == "agent" ? userId : agentId });
     setMessages((prev) => [...prev, { id: prev.length + 1, sender: role, text: currentMessage }])
     setCurrentMessage("")
   }
