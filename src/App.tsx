@@ -19,7 +19,6 @@ import ComplianceDashboard from './components/ComplianceDashboard'
 import KYCWebRTCSystem from "./components/Video-Kyc/KycWebRtcService";
 import ChatbotWidget from "./components/ChatWidget";
 import {KYCVerificationContextProvider } from "./context/CurrentStepContext";
-import AI_Agent from "./components/AI-Agent";
 
 
 const queryClient = new QueryClient();
@@ -40,7 +39,7 @@ const App = () => (
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/profile" element={<Profile />} />
-                  <Route path="/kyc-agent" element={<AI_Agent />} />
+                  
                   
                 <Route path="/compliance"
 
