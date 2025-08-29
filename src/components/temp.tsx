@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // ⬅️ added useLocation
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { logoutUser } from "@/api/auth";
+import { useToast } from "@/hooks/use-toast";
 import {
   Menu,
   Shield,
@@ -26,11 +29,8 @@ import {
   BrainCircuit,
   UserCheck,
   HelpCircle,
-  Sparkles,
+  Sparkles
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { logoutUser } from "@/api/auth";
-import { useToast } from "@/hooks/use-toast";
 
 const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
   const [selectedMethod, setSelectedMethod] = useState("");
@@ -47,14 +47,14 @@ const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = 'unset';
     }
-
+    
     // Cleanup on unmount
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
 
@@ -69,25 +69,12 @@ const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
       iconColor: "text-white",
       textColor: "text-gray-200",
       advantages: [
-        {
-          icon: MessageSquare,
-          text: "Real-time chat support throughout the process",
-        },
-        {
-          icon: BrainCircuit,
-          text: "AI-powered intelligent guidance and suggestions",
-        },
-        {
-          icon: HelpCircle,
-          text: "Instant resolution of queries and concerns",
-        },
-        {
-          icon: UserCheck,
-          text: "Expert validation and verification assistance",
-        },
+        { icon: MessageSquare, text: "Real-time chat support throughout the process" },
+        { icon: BrainCircuit, text: "AI-powered intelligent guidance and suggestions" },
+        { icon: HelpCircle, text: "Instant resolution of queries and concerns" },
+        { icon: UserCheck, text: "Expert validation and verification assistance" }
       ],
-      description:
-        "Get personalized assistance from our AI-powered agents for a seamless KYC experience.",
+      description: "Get personalized assistance from our AI-powered agents for a seamless KYC experience."
     },
     {
       id: "manual",
@@ -100,52 +87,44 @@ const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
       textColor: "text-black",
       advantages: [
         { icon: Timer, text: "Complete at your own pace and convenience" },
-        {
-          icon: Smartphone,
-          text: "Mobile-optimized interface for easy access",
-        },
+        { icon: Smartphone, text: "Mobile-optimized interface for easy access" },
         { icon: Lock, text: "Direct control over your data and privacy" },
-        { icon: Sparkles, text: "Streamlined process with minimal steps" },
+        { icon: Sparkles, text: "Streamlined process with minimal steps" }
       ],
-      description:
-        "Take control of your verification process with our intuitive self-service platform.",
-    },
+      description: "Take control of your verification process with our intuitive self-service platform."
+    }
   ];
 
   if (!isOpen) return null;
 
   return (
-    <div
+    <div 
       className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-      style={{
-        position: "fixed",
+      style={{ 
+        position: 'fixed',
         top: 0,
         left: 0,
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "1rem",
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem'
       }}
     >
-      <div
+      <div 
         className="relative w-full max-w-4xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl animate-in fade-in-0 zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto flex flex-col"
         style={{
-          maxHeight: "90vh",
-          margin: "auto",
+          maxHeight: '90vh',
+          margin: 'auto'
         }}
       >
         {/* Header */}
         <div className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 rounded-t-2xl sm:rounded-t-3xl">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                Choose Your KYC Method
-              </h2>
-              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2 pr-2">
-                Select how you'd like to complete your KYC verification process
-              </p>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Choose Your KYC Method</h2>
+              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2 pr-2">Select how you'd like to complete your KYC verification process</p>
             </div>
             <button
               onClick={onClose}
@@ -164,30 +143,21 @@ const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
                 key={method.id}
                 className={`relative cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
                   selectedMethod === method.id
-                    ? `ring-4 ring-opacity-50 ${
-                        method.id === "agent"
-                          ? "ring-zinc-500"
-                          : "ring-blue-300"
-                      } scale-[1.02]`
-                    : "hover:shadow-lg"
+                    ? `ring-4 ring-opacity-50 ${method.id === 'agent' ? 'ring-zinc-500' : 'ring-blue-300'} scale-[1.02]`
+                    : 'hover:shadow-lg'
                 }`}
                 onClick={() => handleMethodSelect(method.id)}
               >
-                <div
-                  className={`bg-gradient-to-br ${method.bgGradient} border-2 ${
-                    selectedMethod === method.id
-                      ? method.id === "agent"
-                        ? "border-zinc-500"
-                        : "border-blue-300"
-                      : method.borderColor
-                  } rounded-xl sm:rounded-2xl p-4 sm:p-6 h-full`}
-                >
+                <div className={`bg-gradient-to-br ${method.bgGradient} border-2 ${
+                  selectedMethod === method.id 
+                    ? method.id === 'agent' ? 'border-zinc-500' : 'border-blue-300'
+                    : method.borderColor
+                } rounded-xl sm:rounded-2xl p-4 sm:p-6 h-full`}>
+                  
                   {/* Selection Indicator */}
                   {selectedMethod === method.id && (
                     <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2">
-                      <div
-                        className={`bg-gradient-to-r ${method.gradient} rounded-full p-1.5 sm:p-2 animate-in zoom-in-0 duration-200`}
-                      >
+                      <div className={`bg-gradient-to-r ${method.gradient} rounded-full p-1.5 sm:p-2 animate-in zoom-in-0 duration-200`}>
                         <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
                     </div>
@@ -195,20 +165,14 @@ const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
 
                   {/* Icon and Title */}
                   <div className="flex items-start sm:items-center mb-4 sm:mb-6">
-                    <div
-                      className={`bg-gradient-to-r ${method.gradient} rounded-xl sm:rounded-2xl p-3 sm:p-4 mr-3 sm:mr-4 flex-shrink-0`}
-                    >
+                    <div className={`bg-gradient-to-r ${method.gradient} rounded-xl sm:rounded-2xl p-3 sm:p-4 mr-3 sm:mr-4 flex-shrink-0`}>
                       <method.icon className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3
-                        className={`text-lg sm:text-xl font-bold ${method.textColor}`}
-                      >
+                      <h3 className={`text-lg sm:text-xl font-bold ${method.textColor}`}>
                         {method.title}
                       </h3>
-                      <p
-                        className={`text-xs sm:text-sm ${method.textColor} mt-1 leading-relaxed`}
-                      >
+                      <p className={`text-xs sm:text-sm ${method.textColor} mt-1 leading-relaxed`}>
                         {method.description}
                       </p>
                     </div>
@@ -216,27 +180,16 @@ const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
 
                   {/* Advantages */}
                   <div className="space-y-3 sm:space-y-4">
-                    <h4
-                      className={`font-semibold ${method.textColor} text-base sm:text-lg`}
-                    >
+                    <h4 className={`font-semibold ${method.textColor} text-base sm:text-lg`}>
                       Key Benefits:
                     </h4>
                     <div className="space-y-2 sm:space-y-3">
                       {method.advantages.map((advantage, index) => (
-                        <div
-                          key={index}
-                          className="flex items-start space-x-2 sm:space-x-3"
-                        >
-                          <div
-                            className={`bg-white rounded-lg p-1.5 sm:p-2 ${method.iconColor} bg-opacity-10 flex-shrink-0`}
-                          >
-                            <advantage.icon
-                              className={`w-4 h-4 sm:w-5 sm:h-5 ${method.iconColor}`}
-                            />
+                        <div key={index} className="flex items-start space-x-2 sm:space-x-3">
+                          <div className={`bg-white rounded-lg p-1.5 sm:p-2 ${method.iconColor} bg-opacity-10 flex-shrink-0`}>
+                            <advantage.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${method.iconColor}`} />
                           </div>
-                          <span
-                            className={`${method.textColor} text-xs sm:text-sm leading-relaxed flex-1`}
-                          >
+                          <span className={`${method.textColor} text-xs sm:text-sm leading-relaxed flex-1`}>
                             {advantage.text}
                           </span>
                         </div>
@@ -245,24 +198,12 @@ const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
                   </div>
 
                   {/* Selection Prompt */}
-                  <div
-                    className={`mt-4 sm:mt-6 pt-3 sm:pt-4 border-t ${
-                      method.id === "agent"
-                        ? "border-gray-500"
-                        : "border-black/30"
-                    }`}
-                  >
+                  <div className={`mt-4 sm:mt-6 pt-3 sm:pt-4 border-t ${method.id === 'agent' ? 'border-gray-500' : 'border-black/30'}`}>
                     <div className="flex items-center justify-center">
-                      <div
-                        className={`px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r ${
-                          method.gradient
-                        } text-white rounded-lg font-medium text-xs sm:text-sm hover:opacity-90 transition-opacity ${
-                          selectedMethod === method.id ? "opacity-75" : ""
-                        }`}
-                      >
-                        {selectedMethod === method.id
-                          ? "Selected!"
-                          : `Select ${method.title}`}
+                      <div className={`px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r ${method.gradient} text-white rounded-lg font-medium text-xs sm:text-sm hover:opacity-90 transition-opacity ${
+                        selectedMethod === method.id ? 'opacity-75' : ''
+                      }`}>
+                        {selectedMethod === method.id ? 'Selected!' : `Select ${method.title}`}
                       </div>
                     </div>
                   </div>
@@ -276,32 +217,31 @@ const KYCMethodModal = ({ isOpen, onClose, onSelect }) => {
   );
 };
 
-const Header = ({ isDarkTheme }) => {
+const Header = ({isDarkTheme}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const location = useLocation(); 
   const { toast } = useToast();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleKYCMethodSelect = (method) => {
     console.log(`Selected KYC method: ${method}`);
-
+    
     // Using shadcn/ui toast syntax instead of react-hot-toast
-    if (method === "agent") {
+    if (method === 'agent') {
       toast({
         title: "Success",
         description: "Navigating to Agent-Assisted KYC",
       });
-      navigate("/kyc-with-ai-agent");
+      navigate('/kyc-with-ai-agent');
     } else {
       toast({
-        title: "Success",
+        title: "Success", 
         description: "Navigating to Self-Service KYC",
       });
-      navigate("/kyc-verification");
+      navigate('/kyc-verification');
     }
   };
 
@@ -312,13 +252,15 @@ const Header = ({ isDarkTheme }) => {
 
       setToken(storedToken && storedToken !== "undefined" ? storedToken : null);
       setUser(
-        storedUser && storedUser !== "undefined" ? JSON.parse(storedUser) : null
+        storedUser && storedUser !== "undefined"
+          ? JSON.parse(storedUser)
+          : null
       );
     };
 
     checkAuthState();
 
-    const handleStorageChange = (e: StorageEvent) => {
+    const handleStorageChange = (e) => {
       if (e.key === "token" || e.key === "user") {
         checkAuthState();
       }
@@ -360,14 +302,10 @@ const Header = ({ isDarkTheme }) => {
     }
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <header
-      className={`sticky top-0 z-40 w-full border-b ${
-        isDarkTheme ? "bg-zinc-900 border-zinc-700" : "bg-background/80"
-      } backdrop-blur`}
-    >
+    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link
@@ -375,23 +313,13 @@ const Header = ({ isDarkTheme }) => {
           className="flex items-center space-x-3 hover:opacity-90 transition-opacity"
         >
           <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-            {isDarkTheme ? (
-              <Bot className="h-5 w-5 text-primary-foreground" />
-            ) : (
-              <Shield className="w-5 h-5 text-white" />
-            )}
+            <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Asmadiya Technologies
             </h1>
-            <p
-              className={`text-sm ${
-                isDarkTheme ? "text-gray-400" : "text-gray-600"
-              }`}
-            >
-              KYC Document Verification {isDarkTheme && "with AI Assistant"}
-            </p>
+            <p className="text-sm text-gray-600">KYC Document Verification</p>
           </div>
         </Link>
 
@@ -400,67 +328,44 @@ const Header = ({ isDarkTheme }) => {
           {token ? (
             <div className="flex items-center gap-4">
               {user && (
-                <span
-                  className={`text-sm ${
-                    isDarkTheme ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
+                <span className="text-sm text-gray-600">
                   Welcome, {user.name}
                 </span>
               )}
 
               {/* Start KYC button */}
-              {!isDarkTheme && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsModalOpen(true)}
-                >
-                  Start KYC
-                </Button>
-              )}
-
-              {/* Profile button */}
-              {!isDarkTheme && (
-                <Button
-                  asChild
-                  size="sm"
-                  variant={isActive("/profile") ? "default" : "outline"}
-                >
-                  <Link to="/profile">
-                    <User className="w-4 h-4 mr-2" />
-                    Profile
-                  </Link>
-                </Button>
-              )}
-
-              {/* Logout */}
               <Button
                 size="sm"
-                variant="ghost"
-                className={`${
-                  isDarkTheme ? "bg-zinc-900 text-white hover:bg-zinc-700" : ""
-                }`}
-                onClick={handleLogout}
+                variant="outline"
+                onClick={() => setIsModalOpen(true)}
               >
-                <LogOut className={`w-4 h-4 mr-2`} />
+                Start KYC
+              </Button>
+
+              {/* Profile button */}
+              <Button
+                asChild
+                size="sm"
+                variant={isActive("/profile") ? "default" : "outline"}
+              >
+                <Link to="/profile">
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </Link>
+              </Button>
+
+              {/* Logout */}
+              <Button size="sm" variant="ghost" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>
             </div>
           ) : (
             <>
-              <Button
-                asChild
-                size="sm"
-                variant={isActive("/signup") ? "default" : "outline"}
-              >
+              <Button asChild size="sm" variant={isActive("/signup") ? "default" : "outline"}>
                 <Link to="/signup">Register</Link>
               </Button>
-              <Button
-                asChild
-                size="sm"
-                variant={isActive("/login") ? "default" : "outline"}
-              >
+              <Button asChild size="sm" variant={isActive("/login") ? "default" : "outline"}>
                 <Link to="/login">Login</Link>
               </Button>
             </>
@@ -479,7 +384,9 @@ const Header = ({ isDarkTheme }) => {
           <nav className="flex flex-col gap-4 md:hidden fixed right-0 top-0 bg-background/95 backdrop-blur h-screen p-4 border-l min-w-[250px]">
             <div className="flex justify-between items-center mb-4">
               {user && (
-                <span className="text-sm text-gray-600">Hi, {user.name}</span>
+                <span className="text-sm text-gray-600">
+                  Hi, {user.name}
+                </span>
               )}
               <X
                 className="w-6 h-6 cursor-pointer"
@@ -540,6 +447,12 @@ const Header = ({ isDarkTheme }) => {
           </nav>
         )}
       </div>
+      
+      <KYCMethodModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSelect={handleKYCMethodSelect}
+      />
     </header>
   );
 };

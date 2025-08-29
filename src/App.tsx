@@ -8,8 +8,8 @@ import { KYCWorkflow } from "./pages/KYC Workflow/KYCWorkflow";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute"; // import the wrapper
-
-
+ 
+ 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { UserContextProvider } from "./context/UserContext";
@@ -21,11 +21,11 @@ import ChatbotWidget from "./components/ChatWidget";
 import { KYCVerificationContextProvider } from "./context/CurrentStepContext";
 import KycWithAIAgent from "./pages/KycWithAIAgent";
 import { useEffect, useState } from "react";
-
+ 
 const queryClient = new QueryClient();
-
+ 
 const App = () => {
-
+ 
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const location = useLocation();
     useEffect(()=>{
@@ -36,7 +36,7 @@ const App = () => {
       }
       console.log("dark theam", isDarkTheme)
     },[location.pathname])
-
+ 
   return (<QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -52,18 +52,18 @@ const App = () => {
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/compliance"
-
+ 
                     element={<ProtectedRoute>
                       <ComplianceDashboard />
                     </ProtectedRoute>}
                   />
                   <Route
                     path="/kyc-verification"
-
+ 
                     element={
                       <ProtectedRoute>
                         <KycVerification />
-
+ 
                       </ProtectedRoute>
                     }
                   />
@@ -81,5 +81,7 @@ const App = () => {
     </TooltipProvider>
   </QueryClientProvider>)
 };
-
+ 
 export default App;
+ 
+ 
