@@ -120,7 +120,7 @@ const KycWithAIAgent = () => {
             setMessages((prev) => [...prev, message])
         } else if (button == "upload") {
             fileInputRef.current?.click();
-            setKycVerificationData((prev)=>({...prev,}))
+            setKycVerificationData({...kycVerificationData, currentStep: CurrentStep.Upload, lastStep: CurrentStep.Upload})
         } else if (button == "Start liveness Session") {
             setStartLivenessSession(true)
         }
